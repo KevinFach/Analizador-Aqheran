@@ -1,0 +1,5 @@
+start miUniverso{
+    @ edad int;
+    # pi float = 3.1416;
+}
+end
