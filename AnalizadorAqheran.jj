@@ -2,35 +2,43 @@
 PARSER_BEGIN(AnalizadorAqheran)
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 
 public class AnalizadorAqheran {
 
-    // Array que guarda los Errores Sintacticos recuperados
+    // Listas para errores y semántica
     static ArrayList<String> tabla = new ArrayList<String>();
+    static ArrayList<String> erroresSemanticos = new ArrayList<String>();
+    static TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    static PilaSemantica pilaSemantica = new PilaSemantica();
 
     public static void main(String[] args) {
         try {
-            // -- CODIGO DE PRUEBA DURO (HARDCODED) --
-            // Esto evita problemas de lectura de archivos en Windows (UTF-16 vs UTF-8)
             String contenido = new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8);
-            System.out.println("--- Contenido del archivo: " + args[0] + " ---");
-            System.out.println(contenido);
-            System.out.println("----------------------------------------");
-            
-            // Limpieza de BOM para Windows
             if (contenido.startsWith("\uFEFF")) {
                 contenido = contenido.substring(1);
             }
 
-            System.out.println("--- Analizando Codigo de Prueba ---");
-            System.out.println(contenido);
-            System.out.println("-----------------------------------");
-
             AnalizadorAqheran parser = new AnalizadorAqheran(new StringReader(contenido));
-            parser.parse();
+            Nodo raiz = parser.parse();
+            
+            if (raiz != null) {
+                System.out.println("\n--- ÁRBOL DE SINTAXIS GENERADO ---");
+                raiz.imprimir("", true);
+                System.out.println("----------------------------------");
+                
+                List<String> cuadruplos = pilaSemantica.getCuadruplos();
+                if (!cuadruplos.isEmpty()) {
+                    System.out.println("\n--- CÓDIGO INTERMEDIO (CUÁDRUPLOS) ---");
+                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
+                    System.out.println("--------------------------------------------");
+                    for (String c : cuadruplos) System.out.println(c);
+                    System.out.println("--------------------------------------------");
+                }
+            }
             
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -38,25 +46,13 @@ public class AnalizadorAqheran {
         }
     }
 
-    // Metodo principal que ejecuta analisis lexico y luego sintactico
-    public void parse() throws IOException {
-        Token token;
-        // Referencia a los errores lexicos del TokenManager
+    public Nodo parse() throws IOException {
         ArrayList<String> erroresLexicos = AnalizadorAqheranTokenManager.tablaErrores;
-        
-        boolean seEncontraronErroresLexicos = false;
-        
-        // Ciclo de Analisis Lexico (Consumir todos los tokens para buscar errores lexicos)
-        // Nota: En un compilador real, el parser consume tokens bajo demanda. 
-        // Aqui lo recorremos primero solo para reportar errores lexicos por separado si se desea,
-        // o podemos dejar que el parser sintactico guíe el consumo.
-        // *Para mantener el estilo de tu archivo original, dejamos que el parser sintactico haga el trabajo,
-        // pero verificamos errores lexicos al final si el TokenManager los guardó.*
+        Nodo raiz = null;
         
         try {
-            principal(); 
+            raiz = principal(); 
             
-            // Reporte final
             if (!erroresLexicos.isEmpty()) {
                 System.out.println("\n** Errores LEXICOS encontrados: **");
                 for (String err : erroresLexicos) System.out.println(err);
@@ -71,14 +67,21 @@ public class AnalizadorAqheran {
                 System.out.println("\n** Analisis SINTACTICO sin errores. **");
             }
 
+            if (!erroresSemanticos.isEmpty()) {
+                System.out.println("\n** Errores SEMANTICOS encontrados: **");
+                for (String err : erroresSemanticos) System.out.println(err);
+            } else {
+                System.out.println("\n** Analisis SEMANTICO sin errores. **");
+            }
+
         } catch (ParseException e) {
             tabla.add(manejarErrorSintactico(e));
         }
+        return raiz;
     }
 
     static String manejarErrorSintactico(ParseException e) {
         String mensajeOriginal = e.getMessage();
-        // Traduccion simple para el usuario
         String mensajeTraducido = mensajeOriginal
             .replace("Encountered", "Encontrado")
             .replace("at line", "en la línea")
@@ -87,6 +90,22 @@ public class AnalizadorAqheran {
             .replace("Was expecting one of:", "Se espera una de estas opciones:");
             
         return "Error Sintactico: " + mensajeTraducido;
+    }
+
+    // Auxiliar para comprobación de tipos
+    static String verificarTipo(String t1, String t2, String op) {
+        if (t1.equals("error") || t2.equals("error")) return "error";
+        
+        // Reglas de compatibilidad simples
+        if (t1.equals(t2)) return t1;
+        
+        // Promoción de int a float
+        if ((t1.equals("int") && t2.equals("float")) || (t1.equals("float") && t2.equals("int"))) {
+            return "float";
+        }
+        
+        erroresSemanticos.add("Error Semantico: Tipos incompatibles [" + t1 + "] y [" + t2 + "] para el operador '" + op + "'");
+        return "error";
     }
 }
 PARSER_END(AnalizadorAqheran)
@@ -212,259 +231,465 @@ TOKEN: // Error Lexico Generico
 // ANALISIS SINTACTICO
 // ==========================================
 
-void principal() : {} 
+Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token t; } 
 {
     try {
-        <INICIO> <IDENTIFICADOR> <LLAVEIZQ>
-        ( Codigo() )+
+        <INICIO> t = <IDENTIFICADOR> { raiz.valor = "Programa: " + t.image; } <LLAVEIZQ>
+        ( hijo = Codigo() { raiz.agregarHijo(hijo); } )+
         <LLAVEDER> <FIN>
+        { return raiz; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
-        // Recuperacion basica: consumir hasta el fin
-        Token t;
+        Token tok;
         do {
-            t = getNextToken();
-        } while (t.kind != EOF && t.kind != FIN);
+            tok = getNextToken();
+        } while (tok.kind != EOF && tok.kind != FIN);
+        return raiz;
     }
 }
 
-void Codigo() : {}
+Nodo Codigo() : { Nodo n; }
 {
-      declararVariable()
-    | declararConstante() 
-    | gramaticaEscribir()
-    | gramaticaLeer()
-    | gramaticaSi()
-    | gramaticaWhile()
-    | gramaticaAsignacion()
-    | llamarFuncion()
-    | gramaticaFor()
-    | gramaticaOperadorLogico()
-    | SentenciasFunciones()
+      n = declararVariable() { return n; }
+    | n = declararConstante() { return n; }
+    | n = gramaticaEscribir() { return n; }
+    | n = gramaticaLeer() { return n; }
+    | n = gramaticaSi() { return n; }
+    | n = gramaticaWhile() { return n; }
+    | n = gramaticaAsignacion() { return n; }
+    | n = llamarFuncion() { return n; }
+    | n = gramaticaFor() { return n; }
+    | n = gramaticaOperadorLogico() { return n; }
+    | n = SentenciasFunciones() { return n; }
 }
 
-void declararVariable() : {}
+Nodo declararVariable() : { Token t; Nodo n = new Nodo("Declaracion Variable"); String tipo; }
 {
     try {
-        <VAR> <IDENTIFICADOR> tipoDato() <DELIMITADOR>
+        <VAR> t = <IDENTIFICADOR> tipo = tipoDato() <DELIMITADOR>
+        { 
+            try {
+                tablaSimbolos.insertar(t.image, tipo);
+            } catch (Exception e) {
+                erroresSemanticos.add(e.getMessage());
+            }
+            n.agregarHijo(new Nodo(t.image, tipo));
+            return n; 
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void declararConstante() : {}
+Nodo declararConstante() : { Token t; Nodo n = new Nodo("Declaracion Constante"); String tipo; Nodo v; }
 {
     try {
-        <CONST> <IDENTIFICADOR> tipoDato() <IGUAL> valor() <DELIMITADOR>
+        <CONST> t = <IDENTIFICADOR> tipo = tipoDato() <IGUAL> v = valor() <DELIMITADOR>
+        {
+            try {
+                tablaSimbolos.insertar(t.image, tipo);
+                // Comprobar que el valor asignado sea compatible con el tipo declarado
+                verificarTipo(tipo, v.tipo, "=");
+            } catch (Exception e) {
+                erroresSemanticos.add(e.getMessage());
+            }
+            Nodo c = new Nodo(t.image, tipo);
+            c.agregarHijo(v);
+            n.agregarHijo(c);
+            return n;
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void tipoDato() : {}
+String tipoDato() : { Token t; }
 {
-    <INT> | <FLOAT> | <BOOL> | <STRING>
+    t = <INT> { return t.image; } 
+    | t = <FLOAT> { return t.image; } 
+    | t = <BOOL> { return t.image; } 
+    | t = <STRING> { return t.image; }
 }
 
-// Regla unificada para valores (enteros, decimales, cadenas, ids)
-void valor() : {}
+Nodo valor() : { Token t; Nodo n; }
 {
-    <ENTEROS> | <VCAD> | <NUMERODECIMAL> | <IDENTIFICADOR>
+    t = <ENTEROS> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); return n; }
+    | t = <VCAD> { n = new Nodo(t.image, "string"); pilaSemantica.push(n); return n; }
+    | t = <NUMERODECIMAL> { n = new Nodo(t.image, "float"); pilaSemantica.push(n); return n; }
+    | t = <IDENTIFICADOR> 
+      { 
+          String tipo = "error";
+          try {
+              tipo = tablaSimbolos.obtenerTipo(t.image);
+          } catch (Exception e) {
+              erroresSemanticos.add(e.getMessage());
+          }
+          n = new Nodo(t.image, tipo);
+          pilaSemantica.push(n);
+          return n; 
+      }
 }
 
-void gramaticaEscribir() : {}
+Nodo gramaticaEscribir() : { Nodo n = new Nodo("Escribir"); Nodo hijo; Token t; }
 {
     try {
         <ESCRIBIR> <PARENIZQ>  
         (    
-            ( <VCAD> | <IDENTIFICADOR> )
-            ( <CONCATENAR> ( <VCAD> | <IDENTIFICADOR> ) )*
+            ( t = <VCAD> { n.agregarHijo(new Nodo(t.image, "string")); } | t = <IDENTIFICADOR> { n.agregarHijo(new Nodo(t.image, "id")); } )
+            ( <CONCATENAR> ( t = <VCAD> { n.agregarHijo(new Nodo(t.image, "string")); } | t = <IDENTIFICADOR> { n.agregarHijo(new Nodo(t.image, "id")); } ) )*
         )+
         <PARENDER> <DELIMITADOR>
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void gramaticaLeer() : {}
+Nodo gramaticaLeer() : { Token t; Nodo n = new Nodo("Leer"); }
 {
     try {
-        <LEER> <PARENIZQ> <IDENTIFICADOR> <PARENDER> <DELIMITADOR>
+        <LEER> <PARENIZQ> t = <IDENTIFICADOR> <PARENDER> <DELIMITADOR>
+        {
+            n.agregarHijo(new Nodo(t.image, "id"));
+            return n;
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void gramaticaSi() : {}
+Nodo gramaticaSi() : { Nodo n = new Nodo("Si (IF)"); Nodo cond, hijo, sino; }
 {
     try {
-        <SI> <PARENIZQ> condicion() <PARENDER> 
-        <LLAVEIZQ> (Codigo())+ <LLAVEDER>
-        ( gramaticaSiNo() )*
+        <SI> <PARENIZQ> cond = condicion() <PARENDER> 
+        { n.agregarHijo(cond); }
+        <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        ( sino = gramaticaSiNo() { n.agregarHijo(sino); } )*
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void gramaticaSiNo() : {}
+Nodo gramaticaSiNo() : { Nodo n = new Nodo("Sino (ELSE)"); Nodo hijo; }
 {
     try {
-        <SINO> <LLAVEIZQ> (Codigo())+ <LLAVEDER>
+        <SINO> <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void condicion() : {}
+Nodo condicion() : { Nodo izq, der, log; Token t; }
 {
     try {
-        valor() OperadoresComparadores() valor()
-        (condicionLogicos())*
+        izq = valor() t = OperadoresComparadores() der = valor()
+        {
+            String tipoRes = verificarTipo(izq.tipo, der.tipo, t.image);
+            if (!tipoRes.equals("error")) tipoRes = "bool"; // El resultado de una comparación es boolean
+            Nodo raiz = new Nodo(t.image, tipoRes);
+            raiz.agregarHijo(izq);
+            raiz.agregarHijo(der);
+        }
+        (log = condicionLogicos() { raiz.agregarHijo(log); })*
+        { return raiz; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void condicionLogicos() : {}
+Nodo condicionLogicos() : { Nodo n; Token t; Nodo v1, v2; Token comp; }
 {
     try {
-        OperadoresLogicos() valor() OperadoresComparadores() valor()
+        t = OperadoresLogicos() v1 = valor() comp = OperadoresComparadores() v2 = valor()
+        {
+            Nodo raiz = new Nodo(t.image, "logico");
+            Nodo comparisons = new Nodo(comp.image, "comparador");
+            comparisons.agregarHijo(v1);
+            comparisons.agregarHijo(v2);
+            raiz.agregarHijo(comparisons);
+            return raiz;
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void OperadoresLogicos() : {}
+Token OperadoresLogicos() : { Token t; }
 {
-     <AND> | <OR> | <NOT>
+     t = <AND> { return t; } | t = <OR> { return t; } | t = <NOT> { return t; }
 }
 
-void OperadoresComparadores() : {}
+Token OperadoresComparadores() : { Token t; }
 {
-    <IGUALDAD> | <DESIGUALDAD> | <MAYOR> | <MENOR> | <MAYORIGUAL> | <MENORIGUAL>
+    t = <IGUALDAD> { return t; } | t = <DESIGUALDAD> { return t; } | t = <MAYOR> { return t; } | t = <MENOR> { return t; } | t = <MAYORIGUAL> { return t; } | t = <MENORIGUAL> { return t; }
 }
 
-void gramaticaWhile() : {}
+Nodo gramaticaWhile() : { Nodo n = new Nodo("While"); Nodo cond, hijo; }
 {
     try{
-        <WHILE> <PARENIZQ> condicion() <PARENDER> 
-        <LLAVEIZQ> (Codigo())+ <LLAVEDER> 
+        <WHILE> <PARENIZQ> cond = condicion() <PARENDER> 
+        { n.agregarHijo(cond); }
+        <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER> 
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void gramaticaAsignacion(): {}
+Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); }
 {
     try{
-        <IDENTIFICADOR> <IGUAL>
-        ( operacionSimple() | asignacionConFuncion() )
+        t = <IDENTIFICADOR> <IGUAL>
+        ( e = operacionSimple() | e = asignacionConFuncion() )
         <DELIMITADOR>
-    } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        {
+            String tipoDestino = "error";
+            try {
+                tipoDestino = tablaSimbolos.obtenerTipo(t.image);
+                verificarTipo(tipoDestino, e.tipo, "=");
+            } catch (Exception e_sem) {
+                erroresSemanticos.add(e_sem.getMessage());
+            }
+            n.valor = "Asignacion: " + t.image;
+            n.tipo = tipoDestino;
+            n.agregarHijo(e);
+            
+            // Sacamos el resultado final de la expresión de la pila para que no se acumule
+            if (!pilaSemantica.isEmpty()) pilaSemantica.pop();
+            
+            return n;
+        }
+    } catch (ParseException e_arg) {
+        tabla.add(manejarErrorSintactico(e_arg));
+        return null;
     }
 }
 
-void operacionSimple(): {}
+Nodo operacionSimple(): { Nodo izq, der; Token t; }
 {
     try{
-       ( 
-         valor() 
-         ( ( <MAS> | <MENOS> | <MULT> | <DIV> | <MOD> ) valor() )*
-       )+
+        izq = termino()
+        (
+            (t = <MAS> | t = <MENOS>) der = termino()
+            {
+                // La Pila Semántica ya tiene los operandos (izq y der) en orden (izq, der)
+                // Sacamos los dos últimos
+                Nodo opDer = pilaSemantica.pop();
+                Nodo opIzq = pilaSemantica.pop();
+                
+                String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
+                
+                // Generamos cuádruplo y metemos el resultado T# en la pila
+                Nodo raiz = pilaSemantica.generarCuadruplo(t.image, opIzq, opDer, tipoRes);
+                raiz.agregarHijo(opIzq);
+                raiz.agregarHijo(opDer);
+                izq = raiz;
+            }
+        )*
+        { return izq; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void gramaticaOperadorLogico(): {}
+Nodo termino(): { Nodo izq, der; Token t; }
+{
+    izq = valor()
+    (
+        (t = <MULT> | t = <DIV> | t = <MOD>) der = valor()
+        {
+            Nodo opDer = pilaSemantica.pop();
+            Nodo opIzq = pilaSemantica.pop();
+            
+            String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
+            
+            Nodo raiz = pilaSemantica.generarCuadruplo(t.image, opIzq, opDer, tipoRes);
+            raiz.agregarHijo(opIzq);
+            raiz.agregarHijo(der);
+            izq = raiz;
+        }
+    )*
+    { return izq; }
+}
+
+Nodo gramaticaOperadorLogico(): { Token t; Token id; Nodo cond; Nodo n = new Nodo("Asignacion Logica"); }
 {
     try{
-        <BOOL> <IDENTIFICADOR> <IGUAL> condicionLogico() <DELIMITADOR>
+        <BOOL> id = <IDENTIFICADOR> <IGUAL> cond = condicionLogico() <DELIMITADOR>
+        {
+            n.valor = "Asignacion Logica: " + id.image;
+            n.agregarHijo(cond);
+            return n;
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void condicionLogico(): {}
+Nodo condicionLogico(): { Nodo izq, der; Token t; }
 {
     try{
-        valor() OperadoresLogicos() valor()
+        izq = valor() t = OperadoresLogicos() der = valor()
+        {
+            Nodo raiz = new Nodo(t.image, "logico");
+            raiz.agregarHijo(izq);
+            raiz.agregarHijo(der);
+            return raiz;
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void gramaticaFor(): {}
+Nodo gramaticaFor(): { Nodo n = new Nodo("For"); Nodo cond, hijo; }
 {
     try {
-        <FOR> <PARENIZQ> condicionFor() <PARENDER> 
-        <LLAVEIZQ> (Codigo())+ <LLAVEDER>
+        <FOR> <PARENIZQ> cond = condicionFor() <PARENDER> 
+        { n.agregarHijo(cond); }
+        <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void condicionFor(): {}
+Nodo condicionFor(): { Token id, id2, val, id3; String tipo; Token comp, inc; Nodo n = new Nodo("Condicion For"); Nodo val2; }
 {
     try {
-        tipoDato() <IDENTIFICADOR> <IGUAL> <ENTEROS> <DELIMITADOR>
-        <IDENTIFICADOR> OperadoresComparadores() valor() <DELIMITADOR>
-        operadorIncDec() <IDENTIFICADOR>
+        tipo = tipoDato() id = <IDENTIFICADOR> <IGUAL> val = <ENTEROS> <DELIMITADOR>
+        id2 = <IDENTIFICADOR> comp = OperadoresComparadores() val2 = valor() <DELIMITADOR>
+        inc = operadorIncDec() id3 = <IDENTIFICADOR>
+        {
+            n.agregarHijo(new Nodo("Inicio: " + id.image + "=" + val.image, tipo));
+            Nodo comparison = new Nodo(comp.image, "comparador");
+            comparison.agregarHijo(new Nodo(id2.image, "id"));
+            comparison.agregarHijo(val2);
+            n.agregarHijo(comparison);
+            n.agregarHijo(new Nodo("Paso: " + inc.image + id3.image));
+            return n;
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void operadorIncDec(): {}
+Token operadorIncDec(): { Token t; }
 {
-    <INC> | <DEC>
+    t = <INC> { return t; } | t = <DEC> { return t; }
 }
 
-void SentenciasFunciones() : {}
+Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, ret; Nodo n; }
 {
     try{
         (
-          <FUNC> tipoDato() <IDENTIFICADOR> <PARENIZQ> [parametros()] <PARENDER>
-          <LLAVEIZQ> (Codigo())* <RETURN> valor() <DELIMITADOR> <LLAVEDER> <DELIMITADOR>
+          <FUNC> tipo = tipoDato() id = <IDENTIFICADOR> <PARENIZQ> [param = parametros()] <PARENDER>
+          {
+              try {
+                  tablaSimbolos.insertar(id.image, tipo); // Registrar retorno de la funcion
+              } catch (Exception e_sem) {
+                  erroresSemanticos.add(e_sem.getMessage());
+              }
+          }
+          <LLAVEIZQ> 
+          { 
+              n = new Nodo("Funcion: " + id.image, tipo); 
+              if (param != null) n.agregarHijo(param);
+          }
+          (hijo = Codigo() { n.agregarHijo(hijo); })* 
+          <RETURN> ret = valor() <DELIMITADOR> <LLAVEDER> <DELIMITADOR>
+          { 
+              verificarTipo(tipo, ret.tipo, "return");
+              Nodo retNode = new Nodo("Return", ret.tipo);
+              retNode.agregarHijo(ret);
+              n.agregarHijo(retNode);
+              return n; 
+          }
         )
         | 
         (
-          <VOID> <IDENTIFICADOR> <PARENIZQ> [parametros()] <PARENDER>
-          <LLAVEIZQ> (Codigo())* <LLAVEDER> <DELIMITADOR>
+          <VOID> id = <IDENTIFICADOR> <PARENIZQ> [param = parametros()] <PARENDER>
+          {
+              try {
+                  tablaSimbolos.insertar(id.image, "void");
+              } catch (Exception e_sem) {
+                  erroresSemanticos.add(e_sem.getMessage());
+              }
+          }
+          <LLAVEIZQ> 
+          { 
+              n = new Nodo("Procedimiento: " + id.image, "void"); 
+              if (param != null) n.agregarHijo(param);
+          }
+          (hijo = Codigo() { n.agregarHijo(hijo); })* 
+          <LLAVEDER> <DELIMITADOR>
+          { return n; }
         )
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void parametros() : {}
+Nodo parametros() : { Token id; String tipo; Nodo n = new Nodo("Parametros"); }
 {
     try{
-        <IDENTIFICADOR> tipoDato()
-        ( <COMA> <IDENTIFICADOR> tipoDato() )*
+        id = <IDENTIFICADOR> tipo = tipoDato() { n.agregarHijo(new Nodo(id.image, tipo)); }
+        ( <COMA> id = <IDENTIFICADOR> tipo = tipoDato() { n.agregarHijo(new Nodo(id.image, tipo)); } )*
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void llamarFuncion() : {}
+Nodo llamarFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion"); }
 {
     try{
-        <FUNC> <IDENTIFICADOR>
-        <PARENIZQ> (valor() (<COMA> valor())*)? <PARENDER> 
+        <FUNC> id = <IDENTIFICADOR>
+        { n.valor = "Llamada: " + id.image; }
+        <PARENIZQ> (v = valor() { n.agregarHijo(v); } (<COMA> v = valor() { n.agregarHijo(v); })*)? <PARENDER> 
         <DELIMITADOR>
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
 
-void asignacionConFuncion() : {}
+Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion"); }
 {
     try{
-        <FUNC> <IDENTIFICADOR>
-        <PARENIZQ> (valor() (<COMA> valor())*)? <PARENDER>
+        <FUNC> id = <IDENTIFICADOR>
+        { 
+            String tipoRet = "error";
+            try {
+                tipoRet = tablaSimbolos.obtenerTipo(id.image);
+            } catch (Exception e) {
+                erroresSemanticos.add(e.getMessage());
+            }
+            n.valor = "Llamada: " + id.image; 
+            n.tipo = tipoRet;
+        }
+        <PARENIZQ> (v = valor() { n.agregarHijo(v); } (<COMA> v = valor() { n.agregarHijo(v); })*)? <PARENDER>
+        { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        return null;
     }
 }
