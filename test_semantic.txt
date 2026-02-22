@@ -1,0 +1,22 @@
+start TestSemantico {
+    @ a int;
+    @ b float;
+    @ c string;
+
+    a = 10;
+    b = 5.5;
+    c = "Hola";
+
+    @ d float;
+    d = a + b; // Correcto (promoción de int a float)
+
+    @ e int;
+    e = a + c; // Error: int + string
+
+    f = 20; // Error: f no declarada
+
+    @ g int;
+    g = 10;
+    @ g float; // Error: g ya declarada
+}
+end
