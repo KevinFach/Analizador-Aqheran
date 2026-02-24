@@ -165,14 +165,21 @@ TOKEN: // Comparadores
     | <MENOR: "<">
     | <MAYORIGUAL: ">=">
     | <MENORIGUAL: "<=">
+    | <ASIG_SUMA: "+=">
+    | <ASIG_RESTA: "-=">
+    | <ASIG_MULT: "*=">
+    | <ASIG_DIV: "/=">
 }
 
 TOKEN: // Valores
 {
-      <ENTEROS: (["0"-"9"])+>
+    | <ENTEROS: (["0"-"9"])+>
     | <NUMERODECIMAL: (["0"-"9"])* "." (["0"-"9"])+>
-    | <VCAD: "\"" (~["\""])* "\""> 
-    // Ajuste leve en VCAD para simplificar expresion regular de strings
+    | <HEX_LITERAL: "0" ["x", "X"] (["0"-"9", "a"-"f", "A"-"F"])+>
+    | <VCAD: ("\"" (~["\""])* "\"") | ("'" (~["'"])* "'")> 
+    | <TRUE: "true">
+    | <FALSE: "false">
+    | <NULL: "null">
 }
 
 TOKEN: // Estructuras de Control
@@ -183,12 +190,20 @@ TOKEN: // Estructuras de Control
     | <VECTOR: "vec">
     | <SI: "if">
     | <SINO: "else">
+    | <SWITCH: "switch">
+    | <CASE: "case">
+    | <DEFAULT_TOKEN: "default">
+    | <BREAK: "break">
+    | <CONTINUE: "continue">
+    | <TRY: "try">
+    | <CATCH: "catch">
+    | <FINALLY: "finally">
 }
 
 TOKEN: // I/O Entrada / Salida
 {
       <LEER: "readline">
-    | <ESCRIBIR: "Aqhe">
+    | <ESCRIBIR: "Aqhe" | "aqhe">
 }
 
 TOKEN: // Delimitadores
@@ -203,6 +218,7 @@ TOKEN: // Delimitadores
     | <PARENIZQ: "(">
     | <PARENDER: ")">
     | <CONCATENAR: "&">
+    | <DOS_PUNTOS: ":">
 }
 
 TOKEN: // Reservadas Extra
@@ -251,6 +267,7 @@ Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token t; }
 Nodo Codigo() : { Nodo n; }
 {
       n = declararVariable() { return n; }
+    | n = declararArreglo() { return n; }
     | n = declararConstante() { return n; }
     | n = gramaticaEscribir() { return n; }
     | n = gramaticaLeer() { return n; }
@@ -261,6 +278,10 @@ Nodo Codigo() : { Nodo n; }
     | n = gramaticaFor() { return n; }
     | n = gramaticaOperadorLogico() { return n; }
     | n = SentenciasFunciones() { return n; }
+    | n = gramaticaSwitch() { return n; }
+    | n = gramaticaTryCatch() { return n; }
+    | <CONTINUE> <DELIMITADOR> { return new Nodo("Continue"); }
+    | <BREAK> <DELIMITADOR> { return new Nodo("Break"); }
 }
 
 Nodo declararVariable() : { Token t; Nodo n = new Nodo("Declaracion Variable"); String tipo; }
@@ -318,6 +339,11 @@ Nodo valor() : { Token t; Nodo n; }
     t = <ENTEROS> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); return n; }
     | t = <VCAD> { n = new Nodo(t.image, "string"); pilaSemantica.push(n); return n; }
     | t = <NUMERODECIMAL> { n = new Nodo(t.image, "float"); pilaSemantica.push(n); return n; }
+    | t = <HEX_LITERAL> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); return n; }
+    | t = <TRUE> { n = new Nodo(t.image, "bool"); pilaSemantica.push(n); return n; }
+    | t = <FALSE> { n = new Nodo(t.image, "bool"); pilaSemantica.push(n); return n; }
+    | t = <NULL> { n = new Nodo(t.image, "null"); pilaSemantica.push(n); return n; }
+    | <PARENIZQ> n = operacionSimple() <PARENDER> { return n; } 
     | t = <IDENTIFICADOR> 
       { 
           String tipo = "error";
@@ -447,17 +473,22 @@ Nodo gramaticaWhile() : { Nodo n = new Nodo("While"); Nodo cond, hijo; }
     }
 }
 
-Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); }
+Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); Token op; }
 {
     try{
-        t = <IDENTIFICADOR> <IGUAL>
-        ( e = operacionSimple() | e = asignacionConFuncion() )
+        t = <IDENTIFICADOR> 
+        (
+          <IGUAL> ( e = operacionSimple() | e = asignacionConFuncion() )
+          |
+          (op = <ASIG_SUMA> | op = <ASIG_RESTA> | op = <ASIG_MULT> | op = <ASIG_DIV>) e = operacionSimple()
+        )
         <DELIMITADOR>
         {
             String tipoDestino = "error";
             try {
                 tipoDestino = tablaSimbolos.obtenerTipo(t.image);
-                verificarTipo(tipoDestino, e.tipo, "=");
+                // Si es asignación compuesta, verificamos tipos igual que en asignación normal
+                verificarTipo(tipoDestino, e.tipo, "="); 
             } catch (Exception e_sem) {
                 erroresSemanticos.add(e_sem.getMessage());
             }
@@ -465,7 +496,6 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
             n.tipo = tipoDestino;
             n.agregarHijo(e);
             
-            // Sacamos el resultado final de la expresión de la pila para que no se acumule
             if (!pilaSemantica.isEmpty()) pilaSemantica.pop();
             
             return n;
@@ -692,4 +722,112 @@ Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Fun
         tabla.add(manejarErrorSintactico(e));
         return null;
     }
+}
+
+Nodo gramaticaSwitch() : { Nodo n = new Nodo("Switch"); Token t; Nodo hijo; }
+{
+    try {
+        <SWITCH> <PARENIZQ> t = <IDENTIFICADOR> <PARENDER> <LLAVEIZQ>
+        { n.agregarHijo(new Nodo("Variable: " + t.image, "id")); }
+        (
+            hijo = gramaticaCase() { n.agregarHijo(hijo); }
+        )+
+        [
+            hijo = gramaticaDefault() { n.agregarHijo(hijo); }
+        ]
+        <LLAVEDER>
+        { return n; }
+    } catch (ParseException e) {
+        tabla.add(manejarErrorSintactico(e));
+        return null;
+    }
+}
+
+Nodo gramaticaCase() : { Nodo n = new Nodo("Case"); Nodo v; Nodo hijo; }
+{
+    <CASE> v = valor() <DOS_PUNTOS>
+    (hijo = Codigo() { n.agregarHijo(hijo); })+
+    [<BREAK> <DELIMITADOR>]
+    { return n; }
+}
+
+Nodo gramaticaDefault() : { Nodo n = new Nodo("Default"); Nodo hijo; }
+{
+    <DEFAULT_TOKEN> <DOS_PUNTOS>
+    (hijo = Codigo() { n.agregarHijo(hijo); })+
+    [<BREAK> <DELIMITADOR>]
+    { return n; }
+}
+
+Nodo gramaticaTryCatch() : { Nodo n = new Nodo("Try-Catch"); Nodo hijo; Token exTipo, exNom; }
+{
+    try {
+        <TRY> <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        (
+            <CATCH> <PARENIZQ> exTipo = <IDENTIFICADOR> exNom = <IDENTIFICADOR> <PARENDER> <LLAVEIZQ>
+            { 
+               Nodo c = new Nodo("Catch"); 
+               c.agregarHijo(new Nodo("Excepcion: " + exTipo.image + " " + exNom.image));
+               n.agregarHijo(c);
+            }
+            (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        )+
+        [
+            <FINALLY> <LLAVEIZQ> 
+            { Nodo f = new Nodo("Finally"); n.agregarHijo(f); }
+            (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        ]
+        { return n; }
+    } catch (ParseException e) {
+        tabla.add(manejarErrorSintactico(e));
+        return null;
+    }
+}
+
+Nodo declararArreglo() : { Token t; Nodo n; String tipo; Nodo init = null; }
+{
+    try {
+        (
+            <VECTOR> t = <IDENTIFICADOR> tipo = tipoDato() 
+            (
+                <CORCHIZQ> <ENTEROS> <CORCHDER> 
+                |
+                <IGUAL> init = inicializarArreglo() 
+            )
+            { n = new Nodo("Vector: " + t.image, tipo); if(init != null) n.agregarHijo(init); }
+        |
+            <MATRIZ> t = <IDENTIFICADOR> tipo = tipoDato()
+            (
+                <CORCHIZQ> <ENTEROS> <CORCHDER> <CORCHIZQ> <ENTEROS> <CORCHDER> 
+                |
+                <IGUAL> init = inicializarMatriz() 
+            )
+            { n = new Nodo("Matriz: " + t.image, tipo); if(init != null) n.agregarHijo(init); }
+        )
+        <DELIMITADOR>
+        { 
+            try { tablaSimbolos.insertar(t.image, "array_" + tipo); } 
+            catch(Exception e) { erroresSemanticos.add(e.getMessage()); }
+            return n; 
+        }
+    } catch (ParseException e) {
+        tabla.add(manejarErrorSintactico(e));
+        return null;
+    }
+}
+
+Nodo inicializarArreglo() : { Nodo n = new Nodo("Inicializacion Arreglo"); Nodo v; }
+{
+    <CORCHIZQ> v = valor() { n.agregarHijo(v); } 
+    ( <COMA> v = valor() { n.agregarHijo(v); } )* 
+    <CORCHDER>
+    { return n; }
+}
+
+Nodo inicializarMatriz() : { Nodo n = new Nodo("Inicializacion Matriz"); Nodo v; }
+{
+    <CORCHIZQ> v = inicializarArreglo() { n.agregarHijo(v); } 
+    ( <COMA> v = inicializarArreglo() { n.agregarHijo(v); } )* 
+    <CORCHDER>
+    { return n; }
 }
