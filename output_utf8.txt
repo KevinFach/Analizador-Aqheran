@@ -1,0 +1,72 @@
+﻿
+** Analisis LEXICO sin errores. **
+
+** Analisis SINTACTICO sin errores. **
+
+** Errores SEMANTICOS encontrados: **
+Error Semantico: Tipos incompatibles [int] y [string] para el operador '+'
+Error Semantico: La variable 'f' no ha sido declarada.
+Error Semantico: La variable 'g' ya fue declarada.
+
+--- ┴RBOL DE SINTAXIS GENERADO ---
+??? Programa: TestSemantico
+    ??? Declaracion Variable
+    ?   ??? a [int]
+    ??? Declaracion Variable
+    ?   ??? b [float]
+    ??? Declaracion Variable
+    ?   ??? c [string]
+    ??? Asignacion: a [int]
+    ?   ??? 10 [int]
+    ??? Asignacion: b [float]
+    ?   ??? 5.5 [float]
+    ??? Asignacion: c [string]
+    ?   ??? "Hola" [string]
+    ??? Declaracion Variable
+    ?   ??? d [float]
+    ??? Asignacion: d [float]
+    ?   ??? T1 [float]
+    ?       ??? a [int]
+    ?       ??? b [float]
+    ??? Declaracion Variable
+    ?   ??? e [int]
+    ??? Asignacion: e [int]
+    ?   ??? T2 [error]
+    ?       ??? a [int]
+    ?       ??? c [string]
+    ??? Asignacion: f [error]
+    ?   ??? 20 [int]
+    ??? Declaracion Variable
+    ?   ??? g [int]
+    ??? Asignacion: g [int]
+    ?   ??? 10 [int]
+    ??? Declaracion Variable
+        ??? g [float]
+----------------------------------
+
+--- TABLA DE S═MBOLOS ---
+NOMBRE          TIPO       DIRECCI╙N 
+------------------------------------------
+a               int        0         
+b               float      4         
+c               string     12        
+d               float      44        
+e               int        52        
+g               int        56        
+------------------------------------------
+
+--- TABLA DE DIRECCIONES (LITERALES) ---
+VALOR                DIRECCI╙N 
+------------------------------------------
+10                   1000      
+5.5                  1004      
+"Hola"               1008      
+20                   1012      
+------------------------------------------
+
+--- C╙DIGO INTERMEDIO (CU┴DRUPLOS) ---
+OP    ARG1       ARG2       RESULTADO 
+--------------------------------------------
++     a          b          T1        
++     a          c          T2        
+--------------------------------------------

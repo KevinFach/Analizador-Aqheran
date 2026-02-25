@@ -13,6 +13,7 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
     static ArrayList<String> tabla = new ArrayList<String>();
     static ArrayList<String> erroresSemanticos = new ArrayList<String>();
     static TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    static TablaDirecciones tablaDirecciones = new TablaDirecciones();
     static PilaSemantica pilaSemantica = new PilaSemantica();
 
     public static void main(String[] args) {
@@ -26,9 +27,22 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
             Nodo raiz = parser.parse();
 
             if (raiz != null) {
-                System.out.println("\n--- \u00c1RBOL DE SINTAXIS GENERADO ---");
+                System.out.println("\n--- ARBOL DE SINTAXIS GENERADO ---");
                 raiz.imprimir("", true);
                 System.out.println("----------------------------------");
+                tablaSimbolos.imprimir();
+                tablaDirecciones.imprimir();
+
+                /* // Cuadruplos deshabilitados temporalmente ya que PilaSemantica fue modificada
+                List<String> cuadruplos = pilaSemantica.getCuadruplos();
+                if (!cuadruplos.isEmpty()) {
+                    System.out.println("\n--- CODIGO INTERMEDIO (CUADRUPLOS) ---");
+                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
+                    System.out.println("--------------------------------------------");
+                    for (String c : cuadruplos) System.out.println(c);
+                    System.out.println("--------------------------------------------");
+                }
+                */
             }
 
         } catch (Exception e) {
@@ -342,37 +356,37 @@ tabla.add(manejarErrorSintactico(e));
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case ENTEROS:{
       t = jj_consume_token(ENTEROS);
-n = new Nodo(t.image, "int"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "int"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case VCAD:{
       t = jj_consume_token(VCAD);
-n = new Nodo(t.image, "string"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "string"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case NUMERODECIMAL:{
       t = jj_consume_token(NUMERODECIMAL);
-n = new Nodo(t.image, "float"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "float"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case HEX_LITERAL:{
       t = jj_consume_token(HEX_LITERAL);
-n = new Nodo(t.image, "int"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "int"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case TRUE:{
       t = jj_consume_token(TRUE);
-n = new Nodo(t.image, "bool"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "bool"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case FALSE:{
       t = jj_consume_token(FALSE);
-n = new Nodo(t.image, "bool"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "bool"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case NULL:{
       t = jj_consume_token(NULL);
-n = new Nodo(t.image, "null"); pilaSemantica.push(n); {if ("" != null) return n;}
+n = new Nodo(t.image, "null"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); {if ("" != null) return n;}
       break;
       }
     case PARENIZQ:{

@@ -13,6 +13,7 @@ public class AnalizadorAqheran {
     static ArrayList<String> tabla = new ArrayList<String>();
     static ArrayList<String> erroresSemanticos = new ArrayList<String>();
     static TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    static TablaDirecciones tablaDirecciones = new TablaDirecciones();
     static PilaSemantica pilaSemantica = new PilaSemantica();
 
     public static void main(String[] args) {
@@ -26,9 +27,22 @@ public class AnalizadorAqheran {
             Nodo raiz = parser.parse();
             
             if (raiz != null) {
-                System.out.println("\n--- ÁRBOL DE SINTAXIS GENERADO ---");
+                System.out.println("\n--- ARBOL DE SINTAXIS GENERADO ---");
                 raiz.imprimir("", true);
                 System.out.println("----------------------------------");
+                tablaSimbolos.imprimir();
+                tablaDirecciones.imprimir();
+                
+                /* // Cuadruplos deshabilitados temporalmente ya que PilaSemantica fue modificada
+                List<String> cuadruplos = pilaSemantica.getCuadruplos();
+                if (!cuadruplos.isEmpty()) {
+                    System.out.println("\n--- CODIGO INTERMEDIO (CUADRUPLOS) ---");
+                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
+                    System.out.println("--------------------------------------------");
+                    for (String c : cuadruplos) System.out.println(c);
+                    System.out.println("--------------------------------------------");
+                }
+                */
             }
             
         } catch (Exception e) {
@@ -164,7 +178,7 @@ TOKEN: // Comparadores
 
 TOKEN: // Valores
 {
-    <ENTEROS: (["0"-"9"])+>
+      <ENTEROS: (["0"-"9"])+>
     | <NUMERODECIMAL: (["0"-"9"])* "." (["0"-"9"])+>
     | <HEX_LITERAL: "0" ["x", "X"] (["0"-"9", "a"-"f", "A"-"F"])+>
     | <VCAD: ("\"" (~["\""])* "\"") | ("'" (~["'"])* "'")> 
@@ -349,13 +363,13 @@ String tipoDato() : { Token t; }
 
 Nodo valor() : { Token t; Nodo n; }
 {
-    t = <ENTEROS> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); return n; }
-    | t = <VCAD> { n = new Nodo(t.image, "string"); pilaSemantica.push(n); return n; }
-    | t = <NUMERODECIMAL> { n = new Nodo(t.image, "float"); pilaSemantica.push(n); return n; }
-    | t = <HEX_LITERAL> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); return n; }
-    | t = <TRUE> { n = new Nodo(t.image, "bool"); pilaSemantica.push(n); return n; }
-    | t = <FALSE> { n = new Nodo(t.image, "bool"); pilaSemantica.push(n); return n; }
-    | t = <NULL> { n = new Nodo(t.image, "null"); pilaSemantica.push(n); return n; }
+    t = <ENTEROS> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
+    | t = <VCAD> { n = new Nodo(t.image, "string"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
+    | t = <NUMERODECIMAL> { n = new Nodo(t.image, "float"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
+    | t = <HEX_LITERAL> { n = new Nodo(t.image, "int"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
+    | t = <TRUE> { n = new Nodo(t.image, "bool"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
+    | t = <FALSE> { n = new Nodo(t.image, "bool"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
+    | t = <NULL> { n = new Nodo(t.image, "null"); pilaSemantica.push(n); tablaDirecciones.insertar(t.image); return n; }
     | <PARENIZQ> n = operacionSimple() <PARENDER> { return n; } 
     | t = <IDENTIFICADOR> 
       { 

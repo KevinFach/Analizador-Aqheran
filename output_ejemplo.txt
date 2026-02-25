@@ -1,0 +1,87 @@
+﻿
+[INFO] Estado de la pila al iniciar bloque principal (Orden RID)
+
+--- Pila Semantica (RID - Inicio) ---
+   |__ : Nodo = 'Programa: EjemploCompleto' [indefinido]
+   |__ : Token [70] = 'start'
+   |__ : Token [73] = 'EjemploCompleto'
+-> Tope: Token [62] = '{'
+----------------------------------------
+
+
+[INFO] Estado de la pila al finalizar bloque principal (Orden IDR)
+
+--- Pila Semantica (IDR - Fin) ---
+   |__ : Nodo = 'Programa: EjemploCompleto' [indefinido]
+   |__ : Token [70] = 'start'
+   |__ : Token [73] = 'EjemploCompleto'
+   |__ : Token [62] = '{'
+   |__ : Nodo = 'Declaracion Variable' [indefinido]
+   |__ : Nodo = 'Asignacion: edad' [int]
+   |__ : Nodo = 'Declaracion Variable' [indefinido]
+   |__ : Nodo = 'Asignacion: precio' [float]
+   |__ : Nodo = 'Asignacion: puntos' [error]
+   |__ : Nodo = 'Declaracion Variable' [indefinido]
+   |__ : Nodo = 'Asignacion: nombre' [string]
+   |__ : Nodo = 'Asignacion: edad' [int]
+   |__ : Nodo = 'Declaracion Variable' [indefinido]
+   |__ : Nodo = 'Declaracion Variable' [indefinido]
+   |__ : Nodo = 'Asignacion: otraEdad' [int]
+   |__ : Token [63] = '}'
+   |__ : Token [71] = 'end'
+-> Tope: Nodo = 'Programa: EjemploCompleto' [indefinido]
+----------------------------------------
+
+
+** Analisis LEXICO sin errores. **
+
+** Analisis SINTACTICO sin errores. **
+
+** Errores SEMANTICOS encontrados: **
+Error Semantico: La variable 'puntos' no ha sido declarada.
+Error Semantico: Tipos incompatibles [int] y [string] para el operador '='
+Error Semantico: La variable 'precio' ya fue declarada.
+
+--- ┴RBOL DE SINTAXIS GENERADO ---
+??? Programa: EjemploCompleto
+    ??? Declaracion Variable
+    ?   ??? edad [int]
+    ??? Asignacion: edad [int]
+    ?   ??? 25 [int]
+    ??? Declaracion Variable
+    ?   ??? precio [float]
+    ??? Asignacion: precio [float]
+    ?   ??? 100 [int]
+    ??? Asignacion: puntos [error]
+    ?   ??? 10 [int]
+    ??? Declaracion Variable
+    ?   ??? nombre [string]
+    ??? Asignacion: nombre [string]
+    ?   ??? "Aqheran" [string]
+    ??? Asignacion: edad [int]
+    ?   ??? nombre [string]
+    ??? Declaracion Variable
+    ?   ??? precio [int]
+    ??? Declaracion Variable
+    ?   ??? otraEdad [int]
+    ??? Asignacion: otraEdad [int]
+        ??? 25 [int]
+----------------------------------
+
+--- TABLA DE S═MBOLOS ---
+NOMBRE          TIPO       DIRECCI╙N 
+------------------------------------------
+edad            int        0         
+precio          float      4         
+nombre          string     12        
+otraEdad        int        44        
+------------------------------------------
+
+--- TABLA DE DIRECCIONES (LITERALES) ---
+VALOR                DIRECCI╙N 
+------------------------------------------
+25                   1000      
+100                  1004      
+10                   1008      
+"Aqheran"            1012      
+------------------------------------------

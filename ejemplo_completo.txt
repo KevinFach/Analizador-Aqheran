@@ -1,0 +1,25 @@
+start EjemploCompleto {
+    // 1. CASO DE ÉXITO: Declaración y asignación correcta
+    @ edad int;
+    edad = 25;
+
+    // 2. CASO DE ÉXITO: Promoción de tipo (int a float)
+    @ precio float;
+    precio = 100; // 100 es int, se promueve a float
+
+    // 3. ERROR SEMÁNTICO: Variable no declarada
+    puntos = 10; 
+
+    // 4. ERROR SEMÁNTICO: Tipos incompatibles
+    @ nombre string;
+    nombre = "Aqheran";
+    edad = nombre; // Error: No puedes meter un string en un int
+
+    // 5. ERROR SEMÁNTICO: Redeclaración
+    @ precio int; // Error: precio ya existe como float
+
+    // 6. LITERALES REPETIDOS: Verás que en la tabla de direcciones no se repiten
+    @ otraEdad int;
+    otraEdad = 25; // 25 ya existe, usará la misma dirección
+}
+end
