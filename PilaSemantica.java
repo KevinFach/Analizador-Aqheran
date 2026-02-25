@@ -9,7 +9,7 @@ public class PilaSemantica {
     }
 
     public Object pop() {
-        return pilaOperandos.pop();
+        return pilaOperandos.pop(); 
     }
     
     public Object peek() {
