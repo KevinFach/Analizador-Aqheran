@@ -55,61 +55,95 @@ public interface AnalizadorAqheranConstants {
   /** RegularExpression Id. */
   int MENORIGUAL = 29;
   /** RegularExpression Id. */
-  int ENTEROS = 30;
+  int ASIG_SUMA = 30;
   /** RegularExpression Id. */
-  int NUMERODECIMAL = 31;
+  int ASIG_RESTA = 31;
   /** RegularExpression Id. */
-  int VCAD = 32;
+  int ASIG_MULT = 32;
   /** RegularExpression Id. */
-  int FOR = 33;
+  int ASIG_DIV = 33;
   /** RegularExpression Id. */
-  int WHILE = 34;
+  int ENTEROS = 34;
   /** RegularExpression Id. */
-  int MATRIZ = 35;
+  int NUMERODECIMAL = 35;
   /** RegularExpression Id. */
-  int VECTOR = 36;
+  int HEX_LITERAL = 36;
   /** RegularExpression Id. */
-  int SI = 37;
+  int VCAD = 37;
   /** RegularExpression Id. */
-  int SINO = 38;
+  int TRUE = 38;
   /** RegularExpression Id. */
-  int LEER = 39;
+  int FALSE = 39;
   /** RegularExpression Id. */
-  int ESCRIBIR = 40;
+  int NULL = 40;
   /** RegularExpression Id. */
-  int PUNTO = 41;
+  int FOR = 41;
   /** RegularExpression Id. */
-  int DELIMITADOR = 42;
+  int WHILE = 42;
   /** RegularExpression Id. */
-  int COMA = 43;
+  int MATRIZ = 43;
   /** RegularExpression Id. */
-  int CORCHIZQ = 44;
+  int VECTOR = 44;
   /** RegularExpression Id. */
-  int CORCHDER = 45;
+  int SI = 45;
   /** RegularExpression Id. */
-  int LLAVEIZQ = 46;
+  int SINO = 46;
   /** RegularExpression Id. */
-  int LLAVEDER = 47;
+  int SWITCH = 47;
   /** RegularExpression Id. */
-  int PARENIZQ = 48;
+  int CASE = 48;
   /** RegularExpression Id. */
-  int PARENDER = 49;
+  int DEFAULT_TOKEN = 49;
   /** RegularExpression Id. */
-  int CONCATENAR = 50;
+  int BREAK = 50;
   /** RegularExpression Id. */
-  int VOID = 51;
+  int CONTINUE = 51;
   /** RegularExpression Id. */
-  int RETURN = 52;
+  int TRY = 52;
   /** RegularExpression Id. */
-  int INICIO = 53;
+  int CATCH = 53;
   /** RegularExpression Id. */
-  int FIN = 54;
+  int FINALLY = 54;
   /** RegularExpression Id. */
-  int FUNC = 55;
+  int LEER = 55;
   /** RegularExpression Id. */
-  int IDENTIFICADOR = 56;
+  int ESCRIBIR = 56;
   /** RegularExpression Id. */
-  int ERROR = 57;
+  int PUNTO = 57;
+  /** RegularExpression Id. */
+  int DELIMITADOR = 58;
+  /** RegularExpression Id. */
+  int COMA = 59;
+  /** RegularExpression Id. */
+  int CORCHIZQ = 60;
+  /** RegularExpression Id. */
+  int CORCHDER = 61;
+  /** RegularExpression Id. */
+  int LLAVEIZQ = 62;
+  /** RegularExpression Id. */
+  int LLAVEDER = 63;
+  /** RegularExpression Id. */
+  int PARENIZQ = 64;
+  /** RegularExpression Id. */
+  int PARENDER = 65;
+  /** RegularExpression Id. */
+  int CONCATENAR = 66;
+  /** RegularExpression Id. */
+  int DOS_PUNTOS = 67;
+  /** RegularExpression Id. */
+  int VOID = 68;
+  /** RegularExpression Id. */
+  int RETURN = 69;
+  /** RegularExpression Id. */
+  int INICIO = 70;
+  /** RegularExpression Id. */
+  int FIN = 71;
+  /** RegularExpression Id. */
+  int FUNC = 72;
+  /** RegularExpression Id. */
+  int IDENTIFICADOR = 73;
+  /** RegularExpression Id. */
+  int ERROR = 74;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -146,17 +180,33 @@ public interface AnalizadorAqheranConstants {
     "\"<\"",
     "\">=\"",
     "\"<=\"",
+    "\"+=\"",
+    "\"-=\"",
+    "\"*=\"",
+    "\"/=\"",
     "<ENTEROS>",
     "<NUMERODECIMAL>",
+    "<HEX_LITERAL>",
     "<VCAD>",
+    "\"true\"",
+    "\"false\"",
+    "\"null\"",
     "\"for\"",
     "\"while\"",
     "\"matrix\"",
     "\"vec\"",
     "\"if\"",
     "\"else\"",
+    "\"switch\"",
+    "\"case\"",
+    "\"default\"",
+    "\"break\"",
+    "\"continue\"",
+    "\"try\"",
+    "\"catch\"",
+    "\"finally\"",
     "\"readline\"",
-    "\"Aqhe\"",
+    "<ESCRIBIR>",
     "\".\"",
     "\";\"",
     "\",\"",
@@ -167,6 +217,7 @@ public interface AnalizadorAqheranConstants {
     "\"(\"",
     "\")\"",
     "\"&\"",
+    "\":\"",
     "\"void\"",
     "\"return\"",
     "\"start\"",

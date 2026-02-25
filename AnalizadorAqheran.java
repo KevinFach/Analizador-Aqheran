@@ -29,15 +29,6 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
                 System.out.println("\n--- \u00c1RBOL DE SINTAXIS GENERADO ---");
                 raiz.imprimir("", true);
                 System.out.println("----------------------------------");
-
-                List<String> cuadruplos = pilaSemantica.getCuadruplos();
-                if (!cuadruplos.isEmpty()) {
-                    System.out.println("\n--- C\u00d3DIGO INTERMEDIO (CU\u00c1DRUPLOS) ---");
-                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
-                    System.out.println("--------------------------------------------");
-                    for (String c : cuadruplos) System.out.println(c);
-                    System.out.println("--------------------------------------------");
-                }
             }
 
         } catch (Exception e) {
@@ -112,23 +103,38 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
 // ANALISIS SINTACTICO
 // ==========================================
   static final public 
-Nodo principal() throws ParseException {Nodo raiz = new Nodo("Programa"); Nodo hijo; Token t;
+Nodo principal() throws ParseException {Nodo raiz = new Nodo("Programa"); Nodo hijo; Token tInicio, tId, tLlaveIzq, tLlaveDer, tFin;
     try {
-      jj_consume_token(INICIO);
-      t = jj_consume_token(IDENTIFICADOR);
-raiz.valor = "Programa: " + t.image;
-      jj_consume_token(LLAVEIZQ);
+      tInicio = jj_consume_token(INICIO);
+      tId = jj_consume_token(IDENTIFICADOR);
+raiz.valor = "Programa: " + tId.image;
+      tLlaveIzq = jj_consume_token(LLAVEIZQ);
+// Ejemplificando apilado en orden RID (Raíz - Izquierda - Derecha)
+            pilaSemantica.push(raiz);
+            pilaSemantica.push(tInicio);
+            pilaSemantica.push(tId);
+            pilaSemantica.push(tLlaveIzq);
+            System.out.println("\n[INFO] Estado de la pila al iniciar bloque principal (Orden RID)");
+            pilaSemantica.imprimirPila("RID - Inicio");
       label_1:
       while (true) {
         hijo = Codigo();
 raiz.agregarHijo(hijo);
+            // Apilando como parte del bloque
+            pilaSemantica.push(hijo);
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
         case BOOL:
         case VAR:
         case CONST:
         case FOR:
         case WHILE:
+        case MATRIZ:
+        case VECTOR:
         case SI:
+        case SWITCH:
+        case BREAK:
+        case CONTINUE:
+        case TRY:
         case LEER:
         case ESCRIBIR:
         case VOID:
@@ -142,9 +148,16 @@ raiz.agregarHijo(hijo);
           break label_1;
         }
       }
-      jj_consume_token(LLAVEDER);
-      jj_consume_token(FIN);
-{if ("" != null) return raiz;}
+      tLlaveDer = jj_consume_token(LLAVEDER);
+      tFin = jj_consume_token(FIN);
+// Ejemplificando apilado en orden IDR (Izquierda - Derecha - Raíz)
+            pilaSemantica.push(tLlaveDer);
+            pilaSemantica.push(tFin);
+            pilaSemantica.push(raiz); // Raíz al final como resolución bottom-up
+            System.out.println("\n[INFO] Estado de la pila al finalizar bloque principal (Orden IDR)");
+            pilaSemantica.imprimirPila("IDR - Fin");
+
+            {if ("" != null) return raiz;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
         Token tok;
@@ -160,6 +173,12 @@ tabla.add(manejarErrorSintactico(e));
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case VAR:{
       n = declararVariable();
+{if ("" != null) return n;}
+      break;
+      }
+    case MATRIZ:
+    case VECTOR:{
+      n = declararArreglo();
 {if ("" != null) return n;}
       break;
       }
@@ -211,6 +230,28 @@ tabla.add(manejarErrorSintactico(e));
     case VOID:{
       n = SentenciasFunciones();
 {if ("" != null) return n;}
+      break;
+      }
+    case SWITCH:{
+      n = gramaticaSwitch();
+{if ("" != null) return n;}
+      break;
+      }
+    case TRY:{
+      n = gramaticaTryCatch();
+{if ("" != null) return n;}
+      break;
+      }
+    case CONTINUE:{
+      jj_consume_token(CONTINUE);
+      jj_consume_token(DELIMITADOR);
+{if ("" != null) return new Nodo("Continue");}
+      break;
+      }
+    case BREAK:{
+      jj_consume_token(BREAK);
+      jj_consume_token(DELIMITADOR);
+{if ("" != null) return new Nodo("Break");}
       break;
       }
     default:
@@ -312,6 +353,33 @@ n = new Nodo(t.image, "string"); pilaSemantica.push(n); {if ("" != null) return 
     case NUMERODECIMAL:{
       t = jj_consume_token(NUMERODECIMAL);
 n = new Nodo(t.image, "float"); pilaSemantica.push(n); {if ("" != null) return n;}
+      break;
+      }
+    case HEX_LITERAL:{
+      t = jj_consume_token(HEX_LITERAL);
+n = new Nodo(t.image, "int"); pilaSemantica.push(n); {if ("" != null) return n;}
+      break;
+      }
+    case TRUE:{
+      t = jj_consume_token(TRUE);
+n = new Nodo(t.image, "bool"); pilaSemantica.push(n); {if ("" != null) return n;}
+      break;
+      }
+    case FALSE:{
+      t = jj_consume_token(FALSE);
+n = new Nodo(t.image, "bool"); pilaSemantica.push(n); {if ("" != null) return n;}
+      break;
+      }
+    case NULL:{
+      t = jj_consume_token(NULL);
+n = new Nodo(t.image, "null"); pilaSemantica.push(n); {if ("" != null) return n;}
+      break;
+      }
+    case PARENIZQ:{
+      jj_consume_token(PARENIZQ);
+      n = operacionSimple();
+      jj_consume_token(PARENDER);
+{if ("" != null) return n;}
       break;
       }
     case IDENTIFICADOR:{
@@ -441,7 +509,13 @@ n.agregarHijo(hijo);
         case CONST:
         case FOR:
         case WHILE:
+        case MATRIZ:
+        case VECTOR:
         case SI:
+        case SWITCH:
+        case BREAK:
+        case CONTINUE:
+        case TRY:
         case LEER:
         case ESCRIBIR:
         case VOID:
@@ -492,7 +566,13 @@ n.agregarHijo(hijo);
         case CONST:
         case FOR:
         case WHILE:
+        case MATRIZ:
+        case VECTOR:
         case SI:
+        case SWITCH:
+        case BREAK:
+        case CONTINUE:
+        case TRY:
         case LEER:
         case ESCRIBIR:
         case VOID:
@@ -651,7 +731,13 @@ n.agregarHijo(hijo);
         case CONST:
         case FOR:
         case WHILE:
+        case MATRIZ:
+        case VECTOR:
         case SI:
+        case SWITCH:
+        case BREAK:
+        case CONTINUE:
+        case TRY:
         case LEER:
         case ESCRIBIR:
         case VOID:
@@ -674,24 +760,67 @@ tabla.add(manejarErrorSintactico(e));
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo gramaticaAsignacion() throws ParseException {Token t; Nodo e; Nodo n = new Nodo("Asignacion");
+  static final public Nodo gramaticaAsignacion() throws ParseException {Token t; Nodo e; Nodo n = new Nodo("Asignacion"); Token op;
     try {
       t = jj_consume_token(IDENTIFICADOR);
-      jj_consume_token(IGUAL);
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-      case ENTEROS:
-      case NUMERODECIMAL:
-      case VCAD:
-      case IDENTIFICADOR:{
+      case IGUAL:{
+        jj_consume_token(IGUAL);
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case ENTEROS:
+        case NUMERODECIMAL:
+        case HEX_LITERAL:
+        case VCAD:
+        case TRUE:
+        case FALSE:
+        case NULL:
+        case PARENIZQ:
+        case IDENTIFICADOR:{
+          e = operacionSimple();
+          break;
+          }
+        case FUNC:{
+          e = asignacionConFuncion();
+          break;
+          }
+        default:
+          jj_la1[15] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
+        break;
+        }
+      case ASIG_SUMA:
+      case ASIG_RESTA:
+      case ASIG_MULT:
+      case ASIG_DIV:{
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case ASIG_SUMA:{
+          op = jj_consume_token(ASIG_SUMA);
+          break;
+          }
+        case ASIG_RESTA:{
+          op = jj_consume_token(ASIG_RESTA);
+          break;
+          }
+        case ASIG_MULT:{
+          op = jj_consume_token(ASIG_MULT);
+          break;
+          }
+        case ASIG_DIV:{
+          op = jj_consume_token(ASIG_DIV);
+          break;
+          }
+        default:
+          jj_la1[16] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
         e = operacionSimple();
         break;
         }
-      case FUNC:{
-        e = asignacionConFuncion();
-        break;
-        }
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[17] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -699,6 +828,7 @@ tabla.add(manejarErrorSintactico(e));
 String tipoDestino = "error";
             try {
                 tipoDestino = tablaSimbolos.obtenerTipo(t.image);
+                // Si es asignación compuesta, verificamos tipos igual que en asignación normal
                 verificarTipo(tipoDestino, e.tipo, "=");
             } catch (Exception e_sem) {
                 erroresSemanticos.add(e_sem.getMessage());
@@ -707,8 +837,10 @@ String tipoDestino = "error";
             n.tipo = tipoDestino;
             n.agregarHijo(e);
 
-            // Sacamos el resultado final de la expresión de la pila para que no se acumule
-            if (!pilaSemantica.isEmpty()) pilaSemantica.pop();
+            if (!pilaSemantica.isEmpty()) {
+                Object tope = pilaSemantica.pop();
+                // Si solo queriamos sacarlo de la pila porque ya se resolvió la asignacion
+            }
 
             {if ("" != null) return n;}
     } catch (ParseException e_arg) {
@@ -730,7 +862,7 @@ tabla.add(manejarErrorSintactico(e_arg));
           break;
           }
         default:
-          jj_la1[16] = jj_gen;
+          jj_la1[18] = jj_gen;
           break label_9;
         }
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -743,20 +875,20 @@ tabla.add(manejarErrorSintactico(e_arg));
           break;
           }
         default:
-          jj_la1[17] = jj_gen;
+          jj_la1[19] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         der = termino();
 // La Pila Semántica ya tiene los operandos (izq y der) en orden (izq, der)
-                // Sacamos los dos últimos
-                Nodo opDer = pilaSemantica.pop();
-                Nodo opIzq = pilaSemantica.pop();
+                // Sacamos los dos últimos haciendo el casteo a Nodo
+                Nodo opDer = (Nodo) pilaSemantica.pop();
+                Nodo opIzq = (Nodo) pilaSemantica.pop();
 
                 String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
 
-                // Generamos cuádruplo y metemos el resultado T# en la pila
-                Nodo raiz = pilaSemantica.generarCuadruplo(t.image, opIzq, opDer, tipoRes);
+                // Generamos nodo temporal T# en la pila
+                Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
                 raiz.agregarHijo(opIzq);
                 raiz.agregarHijo(opDer);
                 izq = raiz;
@@ -781,7 +913,7 @@ tabla.add(manejarErrorSintactico(e));
         break;
         }
       default:
-        jj_la1[18] = jj_gen;
+        jj_la1[20] = jj_gen;
         break label_10;
       }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -798,17 +930,17 @@ tabla.add(manejarErrorSintactico(e));
         break;
         }
       default:
-        jj_la1[19] = jj_gen;
+        jj_la1[21] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       der = valor();
-Nodo opDer = pilaSemantica.pop();
-            Nodo opIzq = pilaSemantica.pop();
+Nodo opDer = (Nodo) pilaSemantica.pop();
+            Nodo opIzq = (Nodo) pilaSemantica.pop();
 
             String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
 
-            Nodo raiz = pilaSemantica.generarCuadruplo(t.image, opIzq, opDer, tipoRes);
+            Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
             raiz.agregarHijo(opIzq);
             raiz.agregarHijo(der);
             izq = raiz;
@@ -868,7 +1000,13 @@ n.agregarHijo(hijo);
         case CONST:
         case FOR:
         case WHILE:
+        case MATRIZ:
+        case VECTOR:
         case SI:
+        case SWITCH:
+        case BREAK:
+        case CONTINUE:
+        case TRY:
         case LEER:
         case ESCRIBIR:
         case VOID:
@@ -878,7 +1016,7 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[20] = jj_gen;
+          jj_la1[22] = jj_gen;
           break label_11;
         }
       }
@@ -931,7 +1069,7 @@ tabla.add(manejarErrorSintactico(e));
       break;
       }
     default:
-      jj_la1[21] = jj_gen;
+      jj_la1[23] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -952,7 +1090,7 @@ tabla.add(manejarErrorSintactico(e));
           break;
           }
         default:
-          jj_la1[22] = jj_gen;
+          jj_la1[24] = jj_gen;
           ;
         }
         jj_consume_token(PARENDER);
@@ -972,7 +1110,13 @@ n = new Nodo("Funcion: " + id.image, tipo);
           case CONST:
           case FOR:
           case WHILE:
+          case MATRIZ:
+          case VECTOR:
           case SI:
+          case SWITCH:
+          case BREAK:
+          case CONTINUE:
+          case TRY:
           case LEER:
           case ESCRIBIR:
           case VOID:
@@ -982,7 +1126,7 @@ n = new Nodo("Funcion: " + id.image, tipo);
             break;
             }
           default:
-            jj_la1[23] = jj_gen;
+            jj_la1[25] = jj_gen;
             break label_12;
           }
           hijo = Codigo();
@@ -1010,7 +1154,7 @@ verificarTipo(tipo, ret.tipo, "return");
           break;
           }
         default:
-          jj_la1[24] = jj_gen;
+          jj_la1[26] = jj_gen;
           ;
         }
         jj_consume_token(PARENDER);
@@ -1030,7 +1174,13 @@ n = new Nodo("Procedimiento: " + id.image, "void");
           case CONST:
           case FOR:
           case WHILE:
+          case MATRIZ:
+          case VECTOR:
           case SI:
+          case SWITCH:
+          case BREAK:
+          case CONTINUE:
+          case TRY:
           case LEER:
           case ESCRIBIR:
           case VOID:
@@ -1040,7 +1190,7 @@ n = new Nodo("Procedimiento: " + id.image, "void");
             break;
             }
           default:
-            jj_la1[25] = jj_gen;
+            jj_la1[27] = jj_gen;
             break label_13;
           }
           hijo = Codigo();
@@ -1052,7 +1202,7 @@ n.agregarHijo(hijo);
         break;
         }
       default:
-        jj_la1[26] = jj_gen;
+        jj_la1[28] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1076,7 +1226,7 @@ n.agregarHijo(new Nodo(id.image, tipo));
           break;
           }
         default:
-          jj_la1[27] = jj_gen;
+          jj_la1[29] = jj_gen;
           break label_14;
         }
         jj_consume_token(COMA);
@@ -1101,7 +1251,12 @@ n.valor = "Llamada: " + id.image;
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case ENTEROS:
       case NUMERODECIMAL:
+      case HEX_LITERAL:
       case VCAD:
+      case TRUE:
+      case FALSE:
+      case NULL:
+      case PARENIZQ:
       case IDENTIFICADOR:{
         v = valor();
 n.agregarHijo(v);
@@ -1113,7 +1268,7 @@ n.agregarHijo(v);
             break;
             }
           default:
-            jj_la1[28] = jj_gen;
+            jj_la1[30] = jj_gen;
             break label_15;
           }
           jj_consume_token(COMA);
@@ -1123,7 +1278,7 @@ n.agregarHijo(v);
         break;
         }
       default:
-        jj_la1[29] = jj_gen;
+        jj_la1[31] = jj_gen;
         ;
       }
       jj_consume_token(PARENDER);
@@ -1152,7 +1307,12 @@ String tipoRet = "error";
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case ENTEROS:
       case NUMERODECIMAL:
+      case HEX_LITERAL:
       case VCAD:
+      case TRUE:
+      case FALSE:
+      case NULL:
+      case PARENIZQ:
       case IDENTIFICADOR:{
         v = valor();
 n.agregarHijo(v);
@@ -1164,7 +1324,7 @@ n.agregarHijo(v);
             break;
             }
           default:
-            jj_la1[30] = jj_gen;
+            jj_la1[32] = jj_gen;
             break label_16;
           }
           jj_consume_token(COMA);
@@ -1174,7 +1334,7 @@ n.agregarHijo(v);
         break;
         }
       default:
-        jj_la1[31] = jj_gen;
+        jj_la1[33] = jj_gen;
         ;
       }
       jj_consume_token(PARENDER);
@@ -1183,6 +1343,397 @@ n.agregarHijo(v);
 tabla.add(manejarErrorSintactico(e));
         {if ("" != null) return null;}
     }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo gramaticaSwitch() throws ParseException {Nodo n = new Nodo("Switch"); Token t; Nodo hijo;
+    try {
+      jj_consume_token(SWITCH);
+      jj_consume_token(PARENIZQ);
+      t = jj_consume_token(IDENTIFICADOR);
+      jj_consume_token(PARENDER);
+      jj_consume_token(LLAVEIZQ);
+n.agregarHijo(new Nodo("Variable: " + t.image, "id"));
+      label_17:
+      while (true) {
+        hijo = gramaticaCase();
+n.agregarHijo(hijo);
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case CASE:{
+          ;
+          break;
+          }
+        default:
+          jj_la1[34] = jj_gen;
+          break label_17;
+        }
+      }
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case DEFAULT_TOKEN:{
+        hijo = gramaticaDefault();
+n.agregarHijo(hijo);
+        break;
+        }
+      default:
+        jj_la1[35] = jj_gen;
+        ;
+      }
+      jj_consume_token(LLAVEDER);
+{if ("" != null) return n;}
+    } catch (ParseException e) {
+tabla.add(manejarErrorSintactico(e));
+        {if ("" != null) return null;}
+    }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo gramaticaCase() throws ParseException {Nodo n = new Nodo("Case"); Nodo v; Nodo hijo;
+    jj_consume_token(CASE);
+    v = valor();
+    jj_consume_token(DOS_PUNTOS);
+    label_18:
+    while (true) {
+      hijo = Codigo();
+n.agregarHijo(hijo);
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case BOOL:
+      case VAR:
+      case CONST:
+      case FOR:
+      case WHILE:
+      case MATRIZ:
+      case VECTOR:
+      case SI:
+      case SWITCH:
+      case BREAK:
+      case CONTINUE:
+      case TRY:
+      case LEER:
+      case ESCRIBIR:
+      case VOID:
+      case FUNC:
+      case IDENTIFICADOR:{
+        ;
+        break;
+        }
+      default:
+        jj_la1[36] = jj_gen;
+        break label_18;
+      }
+    }
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case BREAK:{
+      jj_consume_token(BREAK);
+      jj_consume_token(DELIMITADOR);
+      break;
+      }
+    default:
+      jj_la1[37] = jj_gen;
+      ;
+    }
+{if ("" != null) return n;}
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo gramaticaDefault() throws ParseException {Nodo n = new Nodo("Default"); Nodo hijo;
+    jj_consume_token(DEFAULT_TOKEN);
+    jj_consume_token(DOS_PUNTOS);
+    label_19:
+    while (true) {
+      hijo = Codigo();
+n.agregarHijo(hijo);
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case BOOL:
+      case VAR:
+      case CONST:
+      case FOR:
+      case WHILE:
+      case MATRIZ:
+      case VECTOR:
+      case SI:
+      case SWITCH:
+      case BREAK:
+      case CONTINUE:
+      case TRY:
+      case LEER:
+      case ESCRIBIR:
+      case VOID:
+      case FUNC:
+      case IDENTIFICADOR:{
+        ;
+        break;
+        }
+      default:
+        jj_la1[38] = jj_gen;
+        break label_19;
+      }
+    }
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case BREAK:{
+      jj_consume_token(BREAK);
+      jj_consume_token(DELIMITADOR);
+      break;
+      }
+    default:
+      jj_la1[39] = jj_gen;
+      ;
+    }
+{if ("" != null) return n;}
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo gramaticaTryCatch() throws ParseException {Nodo n = new Nodo("Try-Catch"); Nodo hijo; Token exTipo, exNom;
+    try {
+      jj_consume_token(TRY);
+      jj_consume_token(LLAVEIZQ);
+      label_20:
+      while (true) {
+        hijo = Codigo();
+n.agregarHijo(hijo);
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case BOOL:
+        case VAR:
+        case CONST:
+        case FOR:
+        case WHILE:
+        case MATRIZ:
+        case VECTOR:
+        case SI:
+        case SWITCH:
+        case BREAK:
+        case CONTINUE:
+        case TRY:
+        case LEER:
+        case ESCRIBIR:
+        case VOID:
+        case FUNC:
+        case IDENTIFICADOR:{
+          ;
+          break;
+          }
+        default:
+          jj_la1[40] = jj_gen;
+          break label_20;
+        }
+      }
+      jj_consume_token(LLAVEDER);
+      label_21:
+      while (true) {
+        jj_consume_token(CATCH);
+        jj_consume_token(PARENIZQ);
+        exTipo = jj_consume_token(IDENTIFICADOR);
+        exNom = jj_consume_token(IDENTIFICADOR);
+        jj_consume_token(PARENDER);
+        jj_consume_token(LLAVEIZQ);
+Nodo c = new Nodo("Catch");
+               c.agregarHijo(new Nodo("Excepcion: " + exTipo.image + " " + exNom.image));
+               n.agregarHijo(c);
+        label_22:
+        while (true) {
+          hijo = Codigo();
+n.agregarHijo(hijo);
+          switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+          case BOOL:
+          case VAR:
+          case CONST:
+          case FOR:
+          case WHILE:
+          case MATRIZ:
+          case VECTOR:
+          case SI:
+          case SWITCH:
+          case BREAK:
+          case CONTINUE:
+          case TRY:
+          case LEER:
+          case ESCRIBIR:
+          case VOID:
+          case FUNC:
+          case IDENTIFICADOR:{
+            ;
+            break;
+            }
+          default:
+            jj_la1[41] = jj_gen;
+            break label_22;
+          }
+        }
+        jj_consume_token(LLAVEDER);
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case CATCH:{
+          ;
+          break;
+          }
+        default:
+          jj_la1[42] = jj_gen;
+          break label_21;
+        }
+      }
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case FINALLY:{
+        jj_consume_token(FINALLY);
+        jj_consume_token(LLAVEIZQ);
+Nodo f = new Nodo("Finally"); n.agregarHijo(f);
+        label_23:
+        while (true) {
+          hijo = Codigo();
+n.agregarHijo(hijo);
+          switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+          case BOOL:
+          case VAR:
+          case CONST:
+          case FOR:
+          case WHILE:
+          case MATRIZ:
+          case VECTOR:
+          case SI:
+          case SWITCH:
+          case BREAK:
+          case CONTINUE:
+          case TRY:
+          case LEER:
+          case ESCRIBIR:
+          case VOID:
+          case FUNC:
+          case IDENTIFICADOR:{
+            ;
+            break;
+            }
+          default:
+            jj_la1[43] = jj_gen;
+            break label_23;
+          }
+        }
+        jj_consume_token(LLAVEDER);
+        break;
+        }
+      default:
+        jj_la1[44] = jj_gen;
+        ;
+      }
+{if ("" != null) return n;}
+    } catch (ParseException e) {
+tabla.add(manejarErrorSintactico(e));
+        {if ("" != null) return null;}
+    }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo declararArreglo() throws ParseException {Token t; Nodo n; String tipo; Nodo init = null;
+    try {
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case VECTOR:{
+        jj_consume_token(VECTOR);
+        t = jj_consume_token(IDENTIFICADOR);
+        tipo = tipoDato();
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case CORCHIZQ:{
+          jj_consume_token(CORCHIZQ);
+          jj_consume_token(ENTEROS);
+          jj_consume_token(CORCHDER);
+          break;
+          }
+        case IGUAL:{
+          jj_consume_token(IGUAL);
+          init = inicializarArreglo();
+          break;
+          }
+        default:
+          jj_la1[45] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
+n = new Nodo("Vector: " + t.image, tipo); if(init != null) n.agregarHijo(init);
+        break;
+        }
+      case MATRIZ:{
+        jj_consume_token(MATRIZ);
+        t = jj_consume_token(IDENTIFICADOR);
+        tipo = tipoDato();
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case CORCHIZQ:{
+          jj_consume_token(CORCHIZQ);
+          jj_consume_token(ENTEROS);
+          jj_consume_token(CORCHDER);
+          jj_consume_token(CORCHIZQ);
+          jj_consume_token(ENTEROS);
+          jj_consume_token(CORCHDER);
+          break;
+          }
+        case IGUAL:{
+          jj_consume_token(IGUAL);
+          init = inicializarMatriz();
+          break;
+          }
+        default:
+          jj_la1[46] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
+n = new Nodo("Matriz: " + t.image, tipo); if(init != null) n.agregarHijo(init);
+        break;
+        }
+      default:
+        jj_la1[47] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      jj_consume_token(DELIMITADOR);
+try { tablaSimbolos.insertar(t.image, "array_" + tipo); }
+            catch(Exception e) { erroresSemanticos.add(e.getMessage()); }
+            {if ("" != null) return n;}
+    } catch (ParseException e) {
+tabla.add(manejarErrorSintactico(e));
+        {if ("" != null) return null;}
+    }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo inicializarArreglo() throws ParseException {Nodo n = new Nodo("Inicializacion Arreglo"); Nodo v;
+    jj_consume_token(CORCHIZQ);
+    v = valor();
+n.agregarHijo(v);
+    label_24:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case COMA:{
+        ;
+        break;
+        }
+      default:
+        jj_la1[48] = jj_gen;
+        break label_24;
+      }
+      jj_consume_token(COMA);
+      v = valor();
+n.agregarHijo(v);
+    }
+    jj_consume_token(CORCHDER);
+{if ("" != null) return n;}
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo inicializarMatriz() throws ParseException {Nodo n = new Nodo("Inicializacion Matriz"); Nodo v;
+    jj_consume_token(CORCHIZQ);
+    v = inicializarArreglo();
+n.agregarHijo(v);
+    label_25:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case COMA:{
+        ;
+        break;
+        }
+      default:
+        jj_la1[49] = jj_gen;
+        break label_25;
+      }
+      jj_consume_token(COMA);
+      v = inicializarArreglo();
+n.agregarHijo(v);
+    }
+    jj_consume_token(CORCHDER);
+{if ("" != null) return n;}
     throw new Error("Missing return statement in function");
 }
 
@@ -1196,18 +1747,23 @@ tabla.add(manejarErrorSintactico(e));
   static public Token jj_nt;
   static private int jj_ntk;
   static private int jj_gen;
-  static final private int[] jj_la1 = new int[32];
+  static final private int[] jj_la1 = new int[50];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
+  static private int[] jj_la1_2;
   static {
 	   jj_la1_init_0();
 	   jj_la1_init_1();
+	   jj_la1_init_2();
 	}
 	private static void jj_la1_init_0() {
-	   jj_la1_0 = new int[] {0x1a00,0x1a00,0x780,0xc0000000,0x0,0x0,0x0,0x0,0x1a00,0x0,0x1a00,0x700000,0x700000,0x3e800000,0x1a00,0xc0000000,0x6000,0x6000,0x38000,0x38000,0x1a00,0xc0000,0x0,0x1a00,0x0,0x1a00,0x0,0x0,0x0,0xc0000000,0x0,0xc0000000,};
+	   jj_la1_0 = new int[] {0x1a00,0x1a00,0x780,0x0,0x0,0x0,0x0,0x0,0x1a00,0x0,0x1a00,0x700000,0x700000,0x3e800000,0x1a00,0x0,0xc0000000,0xc1000000,0x6000,0x6000,0x38000,0x38000,0x1a00,0xc0000,0x0,0x1a00,0x0,0x1a00,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1a00,0x0,0x1a00,0x0,0x1a00,0x1a00,0x0,0x1a00,0x0,0x1000000,0x1000000,0x0,0x0,0x0,};
 	}
 	private static void jj_la1_init_1() {
-	   jj_la1_1 = new int[] {0x18801a6,0x18801a6,0x0,0x1000001,0x1000001,0x40000,0x1000001,0x1000001,0x18801a6,0x40,0x18801a6,0x0,0x0,0x0,0x18801a6,0x1800001,0x0,0x0,0x0,0x0,0x18801a6,0x0,0x1000000,0x18801a6,0x1000000,0x18801a6,0x880000,0x800,0x800,0x1000001,0x800,0x1000001,};
+	   jj_la1_1 = new int[] {0x19cbe00,0x19cbe00,0x0,0x1fc,0x20,0x0,0x20,0x20,0x19cbe00,0x4000,0x19cbe00,0x0,0x0,0x0,0x19cbe00,0x1fc,0x3,0x3,0x0,0x0,0x0,0x0,0x19cbe00,0x0,0x0,0x19cbe00,0x0,0x19cbe00,0x0,0x8000000,0x8000000,0x1fc,0x8000000,0x1fc,0x10000,0x20000,0x19cbe00,0x40000,0x19cbe00,0x40000,0x19cbe00,0x19cbe00,0x200000,0x19cbe00,0x400000,0x10000000,0x10000000,0x1800,0x8000000,0x8000000,};
+	}
+	private static void jj_la1_init_2() {
+	   jj_la1_2 = new int[] {0x310,0x310,0x0,0x201,0x200,0x4,0x200,0x200,0x310,0x0,0x310,0x0,0x0,0x0,0x310,0x301,0x0,0x0,0x0,0x0,0x0,0x0,0x310,0x0,0x200,0x310,0x200,0x310,0x110,0x0,0x0,0x201,0x0,0x201,0x0,0x0,0x310,0x0,0x310,0x0,0x310,0x310,0x0,0x310,0x0,0x0,0x0,0x0,0x0,0x0,};
 	}
 
   /** Constructor with InputStream. */
@@ -1228,7 +1784,7 @@ tabla.add(manejarErrorSintactico(e));
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 32; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -1242,7 +1798,7 @@ tabla.add(manejarErrorSintactico(e));
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 32; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -1259,7 +1815,7 @@ tabla.add(manejarErrorSintactico(e));
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 32; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -1277,7 +1833,7 @@ tabla.add(manejarErrorSintactico(e));
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 32; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -1293,7 +1849,7 @@ tabla.add(manejarErrorSintactico(e));
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 32; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -1302,7 +1858,7 @@ tabla.add(manejarErrorSintactico(e));
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 32; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
   }
 
   static private Token jj_consume_token(int kind) throws ParseException {
@@ -1353,12 +1909,12 @@ tabla.add(manejarErrorSintactico(e));
   /** Generate ParseException. */
   static public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[58];
+	 boolean[] la1tokens = new boolean[75];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
 	 }
-	 for (int i = 0; i < 32; i++) {
+	 for (int i = 0; i < 50; i++) {
 	   if (jj_la1[i] == jj_gen) {
 		 for (int j = 0; j < 32; j++) {
 		   if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -1367,10 +1923,13 @@ tabla.add(manejarErrorSintactico(e));
 		   if ((jj_la1_1[i] & (1<<j)) != 0) {
 			 la1tokens[32+j] = true;
 		   }
+		   if ((jj_la1_2[i] & (1<<j)) != 0) {
+			 la1tokens[64+j] = true;
+		   }
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 58; i++) {
+	 for (int i = 0; i < 75; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;

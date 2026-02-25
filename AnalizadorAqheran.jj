@@ -29,15 +29,6 @@ public class AnalizadorAqheran {
                 System.out.println("\n--- ÁRBOL DE SINTAXIS GENERADO ---");
                 raiz.imprimir("", true);
                 System.out.println("----------------------------------");
-                
-                List<String> cuadruplos = pilaSemantica.getCuadruplos();
-                if (!cuadruplos.isEmpty()) {
-                    System.out.println("\n--- CÓDIGO INTERMEDIO (CUÁDRUPLOS) ---");
-                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
-                    System.out.println("--------------------------------------------");
-                    for (String c : cuadruplos) System.out.println(c);
-                    System.out.println("--------------------------------------------");
-                }
             }
             
         } catch (Exception e) {
@@ -173,7 +164,7 @@ TOKEN: // Comparadores
 
 TOKEN: // Valores
 {
-    | <ENTEROS: (["0"-"9"])+>
+    <ENTEROS: (["0"-"9"])+>
     | <NUMERODECIMAL: (["0"-"9"])* "." (["0"-"9"])+>
     | <HEX_LITERAL: "0" ["x", "X"] (["0"-"9", "a"-"f", "A"-"F"])+>
     | <VCAD: ("\"" (~["\""])* "\"") | ("'" (~["'"])* "'")> 
@@ -247,13 +238,35 @@ TOKEN: // Error Lexico Generico
 // ANALISIS SINTACTICO
 // ==========================================
 
-Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token t; } 
+Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token tInicio, tId, tLlaveIzq, tLlaveDer, tFin; } 
 {
     try {
-        <INICIO> t = <IDENTIFICADOR> { raiz.valor = "Programa: " + t.image; } <LLAVEIZQ>
-        ( hijo = Codigo() { raiz.agregarHijo(hijo); } )+
-        <LLAVEDER> <FIN>
-        { return raiz; }
+        tInicio = <INICIO> tId = <IDENTIFICADOR> { raiz.valor = "Programa: " + tId.image; } tLlaveIzq = <LLAVEIZQ>
+        {
+            // Ejemplificando apilado en orden RID (Raíz - Izquierda - Derecha)
+            pilaSemantica.push(raiz);
+            pilaSemantica.push(tInicio);
+            pilaSemantica.push(tId);
+            pilaSemantica.push(tLlaveIzq);
+            System.out.println("\n[INFO] Estado de la pila al iniciar bloque principal (Orden RID)");
+            pilaSemantica.imprimirPila("RID - Inicio");
+        }
+        ( hijo = Codigo() { 
+            raiz.agregarHijo(hijo); 
+            // Apilando como parte del bloque
+            pilaSemantica.push(hijo);
+        } )+
+        tLlaveDer = <LLAVEDER> tFin = <FIN>
+        { 
+            // Ejemplificando apilado en orden IDR (Izquierda - Derecha - Raíz)
+            pilaSemantica.push(tLlaveDer);
+            pilaSemantica.push(tFin);
+            pilaSemantica.push(raiz); // Raíz al final como resolución bottom-up
+            System.out.println("\n[INFO] Estado de la pila al finalizar bloque principal (Orden IDR)");
+            pilaSemantica.imprimirPila("IDR - Fin");
+            
+            return raiz; 
+        }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
         Token tok;
@@ -496,7 +509,10 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
             n.tipo = tipoDestino;
             n.agregarHijo(e);
             
-            if (!pilaSemantica.isEmpty()) pilaSemantica.pop();
+            if (!pilaSemantica.isEmpty()) {
+                Object tope = pilaSemantica.pop();
+                // Si solo queriamos sacarlo de la pila porque ya se resolvió la asignacion
+            }
             
             return n;
         }
@@ -514,14 +530,14 @@ Nodo operacionSimple(): { Nodo izq, der; Token t; }
             (t = <MAS> | t = <MENOS>) der = termino()
             {
                 // La Pila Semántica ya tiene los operandos (izq y der) en orden (izq, der)
-                // Sacamos los dos últimos
-                Nodo opDer = pilaSemantica.pop();
-                Nodo opIzq = pilaSemantica.pop();
+                // Sacamos los dos últimos haciendo el casteo a Nodo
+                Nodo opDer = (Nodo) pilaSemantica.pop();
+                Nodo opIzq = (Nodo) pilaSemantica.pop();
                 
                 String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
                 
-                // Generamos cuádruplo y metemos el resultado T# en la pila
-                Nodo raiz = pilaSemantica.generarCuadruplo(t.image, opIzq, opDer, tipoRes);
+                // Generamos nodo temporal T# en la pila
+                Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
                 raiz.agregarHijo(opIzq);
                 raiz.agregarHijo(opDer);
                 izq = raiz;
@@ -540,12 +556,12 @@ Nodo termino(): { Nodo izq, der; Token t; }
     (
         (t = <MULT> | t = <DIV> | t = <MOD>) der = valor()
         {
-            Nodo opDer = pilaSemantica.pop();
-            Nodo opIzq = pilaSemantica.pop();
+            Nodo opDer = (Nodo) pilaSemantica.pop();
+            Nodo opIzq = (Nodo) pilaSemantica.pop();
             
             String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
             
-            Nodo raiz = pilaSemantica.generarCuadruplo(t.image, opIzq, opDer, tipoRes);
+            Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
             raiz.agregarHijo(opIzq);
             raiz.agregarHijo(der);
             izq = raiz;
