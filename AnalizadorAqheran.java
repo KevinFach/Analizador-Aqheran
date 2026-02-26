@@ -15,10 +15,26 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
     static TablaSimbolos tablaSimbolos = new TablaSimbolos();
     static TablaDirecciones tablaDirecciones = new TablaDirecciones();
     static PilaSemantica pilaSemantica = new PilaSemantica();
+    static boolean verbose = false;
 
     public static void main(String[] args) {
+        String archivoEntrada = null;
+        for (String arg : args) {
+            if (arg.equals("--aqheran")) {
+                verbose = true;
+            } else {
+                archivoEntrada = arg;
+            }
+        }
+
+        if (archivoEntrada == null) {
+            System.out.println("Debe proporcionar un archivo de texto para analizar.");
+            System.out.println("Uso: java AnalizadorAqheran [--aqheran] <archivo>");
+            return;
+        }
+
         try {
-            String contenido = new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8);
+            String contenido = new String(Files.readAllBytes(Paths.get(archivoEntrada)), StandardCharsets.UTF_8);
             if (contenido.startsWith("\ufeff")) {
                 contenido = contenido.substring(1);
             }
@@ -27,15 +43,25 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
             Nodo raiz = parser.parse();
 
             if (raiz != null) {
-                System.out.println("\n--- ARBOL DE SINTAXIS GENERADO ---");
-                raiz.imprimir("", true);
-                System.out.println("----------------------------------");
-                tablaSimbolos.imprimir();
-                tablaDirecciones.imprimir();
+                if (verbose) {
+                    System.out.println("\n--- ARBOL DE SINTAXIS GENERADO ---");
+                    raiz.imprimir("", true);
+                    System.out.println("----------------------------------");
+                    tablaSimbolos.imprimir();
+                    tablaDirecciones.imprimir();
+                } else {
+                    // Si no es verbose, imprimimos todos los tokens.
+                    // Generamos una nueva instancia del analizador solo para tokenizar la entrada otra vez, o alternativamente imprimimos los de la lista guardada (si existe).
+                    // Lo más simple es instanciar un TokenManager y listar tokens:
+                    System.out.println("\n--- TOKENS DETECTADOS ---");
+                    for (Token t : AnalizadorAqheranTokenManager.tokensDetectados) {
+                        System.out.println("Token: " + t.image + " (Tipo: " + t.kind + ")");
+                    }
+                }
 
                 /* // Cuadruplos deshabilitados temporalmente ya que PilaSemantica fue modificada
                 List<String> cuadruplos = pilaSemantica.getCuadruplos();
-                if (!cuadruplos.isEmpty()) {
+                if (!cuadruplos.isEmpty() && verbose) {
                     System.out.println("\n--- CODIGO INTERMEDIO (CUADRUPLOS) ---");
                     System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
                     System.out.println("--------------------------------------------");
@@ -128,8 +154,10 @@ raiz.valor = "Programa: " + tId.image;
             pilaSemantica.push(tInicio);
             pilaSemantica.push(tId);
             pilaSemantica.push(tLlaveIzq);
-            System.out.println("\n[INFO] Estado de la pila al iniciar bloque principal (Orden RID)");
-            pilaSemantica.imprimirPila("RID - Inicio");
+            if (verbose) {
+                System.out.println("\n[INFO] Estado de la pila al iniciar bloque principal (Orden RID)");
+                pilaSemantica.imprimirPila("RID - Inicio");
+            }
       label_1:
       while (true) {
         hijo = Codigo();
@@ -168,8 +196,10 @@ raiz.agregarHijo(hijo);
             pilaSemantica.push(tLlaveDer);
             pilaSemantica.push(tFin);
             pilaSemantica.push(raiz); // Raíz al final como resolución bottom-up
-            System.out.println("\n[INFO] Estado de la pila al finalizar bloque principal (Orden IDR)");
-            pilaSemantica.imprimirPila("IDR - Fin");
+            if (verbose) {
+                System.out.println("\n[INFO] Estado de la pila al finalizar bloque principal (Orden IDR)");
+                pilaSemantica.imprimirPila("IDR - Fin");
+            }
 
             {if ("" != null) return raiz;}
     } catch (ParseException e) {

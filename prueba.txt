@@ -1,7 +1,7 @@
 start MiPrograma {
     // Declaracion de variables y constantes
     @ edad int;
-    # gravedad float = 9.81;
+    #gravedad float = 9.81;
 
     // Asignacion
     edad = 20;
@@ -17,7 +17,7 @@ start MiPrograma {
     }
 
     // Estructura Iterativa (While)
-    @ contador int;
+    @contador int;
     contador = 1;
     
     while (contador <= 3) {

@@ -12,6 +12,11 @@ import java.nio.charset.StandardCharsets;
 public class AnalizadorAqheranTokenManager implements AnalizadorAqheranConstants {
     // Lista para acumular errores lexicos sin detener el proceso
     static ArrayList<String> tablaErrores = new ArrayList<String>();
+    static ArrayList<Token> tokensDetectados = new ArrayList<Token>();
+
+    static void CommonTokenAction(Token t) {
+        tokensDetectados.add(t);
+    }
 
   /** Debug output. */
   public static  java.io.PrintStream debugStream = System.out;
@@ -867,6 +872,7 @@ public static Token getNextToken()
       jjmatchedKind = 0;
       jjmatchedPos = -1;
       matchedToken = jjFillToken();
+      CommonTokenAction(matchedToken);
       return matchedToken;
    }
    image = jjimage;
@@ -893,6 +899,7 @@ public static Token getNextToken()
       {
          matchedToken = jjFillToken();
          TokenLexicalActions(matchedToken);
+         CommonTokenAction(matchedToken);
          return matchedToken;
       }
       else
