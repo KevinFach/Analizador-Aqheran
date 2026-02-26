@@ -55,7 +55,7 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
                     // Lo más simple es instanciar un TokenManager y listar tokens:
                     System.out.println("\n--- TOKENS DETECTADOS ---");
                     for (Token t : AnalizadorAqheranTokenManager.tokensDetectados) {
-                        System.out.println("Token: " + t.image + " (Tipo: " + t.kind + ")");
+                        System.out.println("Token: " + t.image + " (Tipo: " + tokenImage[t.kind] + ")");
                     }
                 }
 
