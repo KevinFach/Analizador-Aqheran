@@ -24,5 +24,6 @@ start MiPrograma {
         aqhe("Contador: " & contador);
         contador += 1;
     }
-
+    readline(edad);
+    aqhe(edad & "es mayor de edad");
 } end
