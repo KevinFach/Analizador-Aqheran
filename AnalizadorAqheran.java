@@ -139,6 +139,23 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
         return "error";
     }
 
+    // Metodo para el Modo Panico: Salta tokens hasta encontrar uno de sincronizacion
+    static void skipToNextBreakpoint(int... kinds) {
+        Token t;
+        boolean found = false;
+        while (!found) {
+            t = getToken(1);
+            if (t.kind == EOF) break;
+            for (int k : kinds) {
+                if (t.kind == k) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) getNextToken();
+        }
+    }
+
 // ==========================================
 // ANALISIS SINTACTICO
 // ==========================================
@@ -204,10 +221,8 @@ raiz.agregarHijo(hijo);
             {if ("" != null) return raiz;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
-        Token tok;
-        do {
-            tok = getNextToken();
-        } while (tok.kind != EOF && tok.kind != FIN);
+        skipToNextBreakpoint(FIN, EOF);
+        if (getToken(1).kind == FIN) getNextToken();
         {if ("" != null) return raiz;}
     }
     throw new Error("Missing return statement in function");
@@ -321,6 +336,8 @@ try {
             {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -347,6 +364,8 @@ try {
             {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -514,6 +533,8 @@ n.agregarHijo(new Nodo(t.image, "id"));
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -530,6 +551,8 @@ n.agregarHijo(new Nodo(t.image, "id"));
             {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -591,6 +614,8 @@ n.agregarHijo(sino);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -634,6 +659,8 @@ n.agregarHijo(hijo);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -668,6 +695,8 @@ raiz.agregarHijo(log);
 {if ("" != null) return raiz;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
+        if (getToken(1).kind == PARENDER) getNextToken(); // Added for panic mode
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -687,6 +716,7 @@ Nodo raiz = new Nodo(t.image, "logico");
             {if ("" != null) return raiz;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -799,6 +829,8 @@ n.agregarHijo(hijo);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -889,6 +921,8 @@ String tipoDestino = "error";
             {if ("" != null) return n;}
     } catch (ParseException e_arg) {
 tabla.add(manejarErrorSintactico(e_arg));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -940,6 +974,7 @@ tabla.add(manejarErrorSintactico(e_arg));
 {if ("" != null) return izq;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1005,6 +1040,8 @@ n.valor = "Asignacion Logica: " + id.image;
             {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1021,6 +1058,7 @@ Nodo raiz = new Nodo(t.image, "logico");
             {if ("" != null) return raiz;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1068,6 +1106,8 @@ n.agregarHijo(hijo);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1252,6 +1292,8 @@ n.agregarHijo(hijo);
       }
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1281,6 +1323,7 @@ n.agregarHijo(new Nodo(id.image, tipo));
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1330,6 +1373,8 @@ n.agregarHijo(v);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1385,6 +1430,7 @@ n.agregarHijo(v);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, DELIMITADOR, LLAVEDER, FIN, EOF);
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1426,6 +1472,8 @@ n.agregarHijo(hijo);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1658,6 +1706,8 @@ n.agregarHijo(hijo);
 {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1728,6 +1778,8 @@ try { tablaSimbolos.insertar(t.image, "array_" + tipo); }
             {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");

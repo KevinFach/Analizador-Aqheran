@@ -10,9 +10,9 @@ start MiPrograma {
     aqhe("Iniciando prueba de Aqheran...");
 
     // Estructura Condicional
-    if (edad >= 18) {
+    iff (edad >= 18) {
         aqhe("El usuario es mayor de edad.");
-    } else {
+    } elsee {
         aqhe("El usuario es menor de edad.");
     }
 

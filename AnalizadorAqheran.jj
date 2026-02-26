@@ -141,6 +141,23 @@ public class AnalizadorAqheran {
         erroresSemanticos.add("Error Semantico: Tipos incompatibles [" + t1 + "] y [" + t2 + "] para el operador '" + op + "'");
         return "error";
     }
+
+    // Metodo para el Modo Panico: Salta tokens hasta encontrar uno de sincronizacion
+    static void skipToNextBreakpoint(int... kinds) {
+        Token t;
+        boolean found = false;
+        while (!found) {
+            t = getToken(1);
+            if (t.kind == EOF) break;
+            for (int k : kinds) {
+                if (t.kind == k) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) getNextToken();
+        }
+    }
 }
 PARSER_END(AnalizadorAqheran)
 
@@ -321,10 +338,8 @@ Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token tInicio,
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
-        Token tok;
-        do {
-            tok = getNextToken();
-        } while (tok.kind != EOF && tok.kind != FIN);
+        skipToNextBreakpoint(FIN, EOF);
+        if (getToken(1).kind == FIN) getNextToken();
         return raiz;
     }
 }
@@ -364,6 +379,8 @@ Nodo declararVariable() : { Token t; Nodo n = new Nodo("Declaracion Variable"); 
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -387,6 +404,8 @@ Nodo declararConstante() : { Token t; Nodo n = new Nodo("Declaracion Constante")
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -435,6 +454,8 @@ Nodo gramaticaEscribir() : { Nodo n = new Nodo("Escribir"); Nodo hijo; Token t; 
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -449,6 +470,8 @@ Nodo gramaticaLeer() : { Token t; Nodo n = new Nodo("Leer"); }
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -463,6 +486,8 @@ Nodo gramaticaSi() : { Nodo n = new Nodo("Si (IF)"); Nodo cond, hijo, sino; }
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
 }
@@ -474,6 +499,8 @@ Nodo gramaticaSiNo() : { Nodo n = new Nodo("Sino (ELSE)"); Nodo hijo; }
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
 }
@@ -493,6 +520,8 @@ Nodo condicion() : { Nodo izq, der, log; Token t; }
         { return raiz; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
+        if (getToken(1).kind == PARENDER) getNextToken(); // Added for panic mode
         return null;
     }
 }
@@ -511,6 +540,7 @@ Nodo condicionLogicos() : { Nodo n; Token t; Nodo v1, v2; Token comp; }
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         return null;
     }
 }
@@ -534,6 +564,8 @@ Nodo gramaticaWhile() : { Nodo n = new Nodo("While"); Nodo cond, hijo; }
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
 }
@@ -570,6 +602,8 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
         }
     } catch (ParseException e_arg) {
         tabla.add(manejarErrorSintactico(e_arg));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -598,6 +632,7 @@ Nodo operacionSimple(): { Nodo izq, der; Token t; }
         { return izq; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         return null;
     }
 }
@@ -633,6 +668,8 @@ Nodo gramaticaOperadorLogico(): { Token t; Token id; Nodo cond; Nodo n = new Nod
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -649,6 +686,7 @@ Nodo condicionLogico(): { Nodo izq, der; Token t; }
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         return null;
     }
 }
@@ -662,6 +700,8 @@ Nodo gramaticaFor(): { Nodo n = new Nodo("For"); Nodo cond, hijo; }
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
 }
@@ -740,6 +780,8 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
         )
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -752,6 +794,7 @@ Nodo parametros() : { Token id; String tipo; Nodo n = new Nodo("Parametros"); }
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         return null;
     }
 }
@@ -766,6 +809,8 @@ Nodo llamarFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion");
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
@@ -788,6 +833,7 @@ Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Fun
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(PARENDER, DELIMITADOR, LLAVEDER, FIN, EOF);
         return null;
     }
 }
@@ -807,6 +853,8 @@ Nodo gramaticaSwitch() : { Nodo n = new Nodo("Switch"); Token t; Nodo hijo; }
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
 }
@@ -848,6 +896,8 @@ Nodo gramaticaTryCatch() : { Nodo n = new Nodo("Try-Catch"); Nodo hijo; Token ex
         { return n; }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
 }
@@ -880,6 +930,8 @@ Nodo declararArreglo() : { Token t; Nodo n; String tipo; Nodo init = null; }
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
 }
