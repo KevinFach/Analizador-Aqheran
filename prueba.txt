@@ -10,9 +10,9 @@ start MiPrograma {
     aqhe("Iniciando prueba de Aqheran...");
 
     // Estructura Condicional
-    iff (edad >= 18) {
+    if (edad >= 18) {
         aqhe("El usuario es mayor de edad.");
-    } elsee {
+    } else {
         aqhe("El usuario es menor de edad.");
     }
 
@@ -20,7 +20,7 @@ start MiPrograma {
     @contador int;
     contador = 1;
     
-    while (contador <= 3) {
+    whhile (contador <= 3) {
         aqhe("Contador: " & contador);
         contador += 1;
     }
