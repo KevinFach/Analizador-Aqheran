@@ -188,6 +188,24 @@ SKIP :
 |   < "/*" (~["*"])* ("*" (~["/"] (~["*"])* ) )* "*" "/" >
 }
 
+TOKEN: // Estructuras de Control
+{
+      <FOR: "for">
+    | <WHILE: "while">
+    | <MATRIZ: "matrix">
+    | <VECTOR: "vec">
+    | <SI: "if">
+    | <SINO: "else">
+    | <SWITCH: "switch">
+    | <CASE: "case">
+    | <DEFAULT_TOKEN: "default">
+    | <BREAK: "break">
+    | <CONTINUE: "continue">
+    | <TRY: "try">
+    | <CATCH: "catch">
+    | <FINALLY: "finally">
+}
+
 TOKEN: // Tipos de Datos
 {
       <INT: "int">
@@ -238,23 +256,7 @@ TOKEN: // Valores
     | <NULL: "null">
 }
 
-TOKEN: // Estructuras de Control
-{
-      <FOR: "for">
-    | <WHILE: "while">
-    | <MATRIZ: "matrix">
-    | <VECTOR: "vec">
-    | <SI: "if">
-    | <SINO: "else">
-    | <SWITCH: "switch">
-    | <CASE: "case">
-    | <DEFAULT_TOKEN: "default">
-    | <BREAK: "break">
-    | <CONTINUE: "continue">
-    | <TRY: "try">
-    | <CATCH: "catch">
-    | <FINALLY: "finally">
-}
+
 
 TOKEN: // I/O Entrada / Salida
 {
@@ -351,15 +353,15 @@ Nodo Codigo() : { Nodo n; Token t; }
     | n = declararConstante() { return n; }
     | n = gramaticaEscribir() { return n; }
     | n = gramaticaLeer() { return n; }
-    | n = gramaticaSi() { return n; }
-    | n = gramaticaWhile() { return n; }
+    | LOOKAHEAD(2) n = gramaticaSi() { return n; }
+    | LOOKAHEAD(2)n = gramaticaWhile() { return n; }
     | LOOKAHEAD(2) n = gramaticaAsignacion() { return n; }
     | n = llamarFuncion() { return n; }
-    | n = gramaticaFor() { return n; }
+    | LOOKAHEAD(2) n = gramaticaFor() { return n; }
     | n = gramaticaOperadorLogico() { return n; }
     | n = SentenciasFunciones() { return n; }
-    | n = gramaticaSwitch() { return n; }
-    | n = gramaticaTryCatch() { return n; }
+    | LOOKAHEAD(2) n = gramaticaSwitch() { return n; }
+    | LOOKAHEAD(2) n = gramaticaTryCatch() { return n; }
     | <CONTINUE> <DELIMITADOR> { return new Nodo("Continue"); }
     | <BREAK> <DELIMITADOR> { return new Nodo("Break"); }
     | t = <IDENTIFICADOR> 
@@ -388,7 +390,7 @@ Nodo declararVariable() : { Token t; Nodo n = new Nodo("Declaracion Variable"); 
         }
     } catch (ParseException e) {
         tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }

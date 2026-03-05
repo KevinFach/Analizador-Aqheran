@@ -9,101 +9,101 @@ public interface AnalizadorAqheranConstants {
   /** End of File. */
   int EOF = 0;
   /** RegularExpression Id. */
-  int INT = 7;
+  int FOR = 7;
   /** RegularExpression Id. */
-  int FLOAT = 8;
+  int WHILE = 8;
   /** RegularExpression Id. */
-  int BOOL = 9;
+  int MATRIZ = 9;
   /** RegularExpression Id. */
-  int STRING = 10;
+  int VECTOR = 10;
   /** RegularExpression Id. */
-  int VAR = 11;
+  int SI = 11;
   /** RegularExpression Id. */
-  int CONST = 12;
+  int SINO = 12;
   /** RegularExpression Id. */
-  int MAS = 13;
+  int SWITCH = 13;
   /** RegularExpression Id. */
-  int MENOS = 14;
+  int CASE = 14;
   /** RegularExpression Id. */
-  int MULT = 15;
+  int DEFAULT_TOKEN = 15;
   /** RegularExpression Id. */
-  int DIV = 16;
+  int BREAK = 16;
   /** RegularExpression Id. */
-  int MOD = 17;
+  int CONTINUE = 17;
   /** RegularExpression Id. */
-  int INC = 18;
+  int TRY = 18;
   /** RegularExpression Id. */
-  int DEC = 19;
+  int CATCH = 19;
   /** RegularExpression Id. */
-  int AND = 20;
+  int FINALLY = 20;
   /** RegularExpression Id. */
-  int OR = 21;
+  int INT = 21;
   /** RegularExpression Id. */
-  int NOT = 22;
+  int FLOAT = 22;
   /** RegularExpression Id. */
-  int IGUALDAD = 23;
+  int BOOL = 23;
   /** RegularExpression Id. */
-  int IGUAL = 24;
+  int STRING = 24;
   /** RegularExpression Id. */
-  int DESIGUALDAD = 25;
+  int VAR = 25;
   /** RegularExpression Id. */
-  int MAYOR = 26;
+  int CONST = 26;
   /** RegularExpression Id. */
-  int MENOR = 27;
+  int MAS = 27;
   /** RegularExpression Id. */
-  int MAYORIGUAL = 28;
+  int MENOS = 28;
   /** RegularExpression Id. */
-  int MENORIGUAL = 29;
+  int MULT = 29;
   /** RegularExpression Id. */
-  int ASIG_SUMA = 30;
+  int DIV = 30;
   /** RegularExpression Id. */
-  int ASIG_RESTA = 31;
+  int MOD = 31;
   /** RegularExpression Id. */
-  int ASIG_MULT = 32;
+  int INC = 32;
   /** RegularExpression Id. */
-  int ASIG_DIV = 33;
+  int DEC = 33;
   /** RegularExpression Id. */
-  int ENTEROS = 34;
+  int AND = 34;
   /** RegularExpression Id. */
-  int NUMERODECIMAL = 35;
+  int OR = 35;
   /** RegularExpression Id. */
-  int HEX_LITERAL = 36;
+  int NOT = 36;
   /** RegularExpression Id. */
-  int VCAD = 37;
+  int IGUALDAD = 37;
   /** RegularExpression Id. */
-  int TRUE = 38;
+  int IGUAL = 38;
   /** RegularExpression Id. */
-  int FALSE = 39;
+  int DESIGUALDAD = 39;
   /** RegularExpression Id. */
-  int NULL = 40;
+  int MAYOR = 40;
   /** RegularExpression Id. */
-  int FOR = 41;
+  int MENOR = 41;
   /** RegularExpression Id. */
-  int WHILE = 42;
+  int MAYORIGUAL = 42;
   /** RegularExpression Id. */
-  int MATRIZ = 43;
+  int MENORIGUAL = 43;
   /** RegularExpression Id. */
-  int VECTOR = 44;
+  int ASIG_SUMA = 44;
   /** RegularExpression Id. */
-  int SI = 45;
+  int ASIG_RESTA = 45;
   /** RegularExpression Id. */
-  int SINO = 46;
+  int ASIG_MULT = 46;
   /** RegularExpression Id. */
-  int SWITCH = 47;
+  int ASIG_DIV = 47;
   /** RegularExpression Id. */
-  int CASE = 48;
+  int ENTEROS = 48;
   /** RegularExpression Id. */
-  int DEFAULT_TOKEN = 49;
+  int NUMERODECIMAL = 49;
   /** RegularExpression Id. */
-  int BREAK = 50;
+  int HEX_LITERAL = 50;
   /** RegularExpression Id. */
-  int CONTINUE = 51;
+  int VCAD = 51;
   /** RegularExpression Id. */
-  int TRY = 52;
+  int TRUE = 52;
   /** RegularExpression Id. */
-  int CATCH = 53;
+  int FALSE = 53;
   /** RegularExpression Id. */
-  int FINALLY = 54;
+  int NULL = 54;
   /** RegularExpression Id. */
   int LEER = 55;
   /** RegularExpression Id. */
@@ -157,6 +157,20 @@ public interface AnalizadorAqheranConstants {
     "\"\\n\"",
     "<token of kind 5>",
     "<token of kind 6>",
+    "\"for\"",
+    "\"while\"",
+    "\"matrix\"",
+    "\"vec\"",
+    "\"if\"",
+    "\"else\"",
+    "\"switch\"",
+    "\"case\"",
+    "\"default\"",
+    "\"break\"",
+    "\"continue\"",
+    "\"try\"",
+    "\"catch\"",
+    "\"finally\"",
     "\"int\"",
     "\"float\"",
     "\"bool\"",
@@ -191,20 +205,6 @@ public interface AnalizadorAqheranConstants {
     "\"true\"",
     "\"false\"",
     "\"null\"",
-    "\"for\"",
-    "\"while\"",
-    "\"matrix\"",
-    "\"vec\"",
-    "\"if\"",
-    "\"else\"",
-    "\"switch\"",
-    "\"case\"",
-    "\"default\"",
-    "\"break\"",
-    "\"continue\"",
-    "\"try\"",
-    "\"catch\"",
-    "\"finally\"",
     "\"readline\"",
     "<ESCRIBIR>",
     "\".\"",

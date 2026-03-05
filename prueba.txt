@@ -1,8 +1,9 @@
 start MiPrograma {
     // Declaracion de variables y constantes
-    @ edad int;
+    @edad int;
+    @if int;
     #gravedad float = 9.81;
-
+  
     // Asignacion
     edad = 20;
 
