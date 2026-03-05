@@ -1,7 +1,7 @@
 start MiPrograma {
     // Declaracion de variables y constantes
     @edad int;
-    @if int;
+    #iff int;
     #gravedad float = 9.81;
   
     // Asignacion
@@ -11,7 +11,7 @@ start MiPrograma {
     aqhe("Iniciando prueba de Aqheran...");
 
     // Estructura Condicional
-    if (edad >= 18) {
+    iff (edad >= 18) {
         aqhe("El usuario es mayor de edad.");
     } else {
         aqhe("El usuario es menor de edad.");
