@@ -1,0 +1,46 @@
+start ProgramaConErrores {
+    // --- ERRORES LEXICOS ---
+    // El simbolo '$' y '¿' no estan definidos en el lenguaje
+    @ variable$Uno int;
+    @ variableDos¿ float;
+
+    // --- ERRORES SINTACTICOS ---
+    // Falta el punto y coma al final de la declaracion
+    @ errorSintactico1 int
+    
+    // Falta cerrar el parentesis en la condicion del if
+    if (10 > 5 {
+        aqhe("Esto fallara por sintaxis");
+    }
+
+    // Bloque while sin cerrar la llave
+    while (true) {
+        aqhe("Bucle infinito con error");
+    // (Falta } aqui)
+
+    // Palabra reservada mal escrita o comando inexistente
+    imprimir("Esto no existe");
+
+    // --- ERRORES SEMANTICOS ---
+    // 1. Variable no declarada
+    noDeclarada = 100;
+
+    // 2. Redeclaracion de variable (ya existe errorSintactico1 arriba, aunque falle sintaxis se intenta registrar)
+    // O mejor una declaracion limpia seguida de redeclaracion
+    @ x int;
+    @ x string;
+
+    // 3. Incompatibilidad de tipos en asignacion
+    @ y int;
+    y = "Soy un string, no un int";
+
+    // 4. Incompatibilidad de tipos en operacion aritmetica
+    @ z int;
+    z = 10 + "Cadena";
+
+    // 5. Comparacion de tipos incompatibles
+    if (true == "true") {
+        aqhe("Error de tipos");
+    }
+
+} end

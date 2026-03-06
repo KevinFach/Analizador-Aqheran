@@ -1,0 +1,60 @@
+﻿
+** Analisis LEXICO sin errores. **
+
+** Analisis SINTACTICO sin errores. **
+
+** Errores SEMANTICOS encontrados: **
+Error Semantico: La variable 'a' no ha sido declarada.
+Error Semantico: La variable 'x' ya fue declarada.
+Error Semantico: Tipos incompatibles [int] y [string] para el operador '+'
+Error Semantico: Tipos incompatibles [int] y [string] para el operador '=='
+
+--- TOKENS DETECTADOS ---
+Token: start (Tipo: "start")
+Token: ProgramaSemantico (Tipo: <IDENTIFICADOR>)
+Token: { (Tipo: "{")
+Token: a (Tipo: <IDENTIFICADOR>)
+Token: = (Tipo: "=")
+Token: 10 (Tipo: <ENTEROS>)
+Token: ; (Tipo: ";")
+Token: @ (Tipo: "@")
+Token: x (Tipo: <IDENTIFICADOR>)
+Token: int (Tipo: "int")
+Token: ; (Tipo: ";")
+Token: @ (Tipo: "@")
+Token: x (Tipo: <IDENTIFICADOR>)
+Token: float (Tipo: "float")
+Token: ; (Tipo: ";")
+Token: @ (Tipo: "@")
+Token: y (Tipo: <IDENTIFICADOR>)
+Token: int (Tipo: "int")
+Token: ; (Tipo: ";")
+Token: y (Tipo: <IDENTIFICADOR>)
+Token: = (Tipo: "=")
+Token: 5.5 (Tipo: <NUMERODECIMAL>)
+Token: ; (Tipo: ";")
+Token: @ (Tipo: "@")
+Token: z (Tipo: <IDENTIFICADOR>)
+Token: int (Tipo: "int")
+Token: ; (Tipo: ";")
+Token: z (Tipo: <IDENTIFICADOR>)
+Token: = (Tipo: "=")
+Token: 10 (Tipo: <ENTEROS>)
+Token: + (Tipo: "+")
+Token: "Hola" (Tipo: <VCAD>)
+Token: ; (Tipo: ";")
+Token: if (Tipo: "if")
+Token: ( (Tipo: "(")
+Token: 10 (Tipo: <ENTEROS>)
+Token: == (Tipo: "==")
+Token: "10" (Tipo: <VCAD>)
+Token: ) (Tipo: ")")
+Token: { (Tipo: "{")
+Token: aqhe (Tipo: <ESCRIBIR>)
+Token: ( (Tipo: "(")
+Token: "Error" (Tipo: <VCAD>)
+Token: ) (Tipo: ")")
+Token: ; (Tipo: ";")
+Token: } (Tipo: "}")
+Token: } (Tipo: "}")
+Token: end (Tipo: "end")

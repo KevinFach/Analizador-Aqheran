@@ -1,0 +1,21 @@
+start ProgramaSemantico {
+    // 1. Variable no declarada
+    a = 10;
+
+    // 2. Redeclaracion
+    @ x int;
+    @ x float;
+
+    // 3. Incompatibilidad en asignacion
+    @ y int;
+    y = 5.5; 
+
+    // 4. Incompatibilidad en operacion
+    @ z int;
+    z = 10 + "Hola";
+
+    // 5. Comparacion incompatible
+    if (10 == "10") {
+        aqhe("Error");
+    }
+} end

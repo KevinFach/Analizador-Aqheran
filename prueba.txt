@@ -21,7 +21,7 @@ start MiPrograma {
     @contador int;
     contador = 1;
     
-    whhile (contador <= 3) {
+    while (contador <= 3) {
         aqhe("Contador: " & contador);
         contador += 1;
     }
