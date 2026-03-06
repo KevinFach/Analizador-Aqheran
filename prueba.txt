@@ -1,7 +1,7 @@
 start MiPrograma {
     // Declaracion de variables y constantes
     @edad int;
-    #iff int;
+    #iff int = 5;
     #gravedad float = 9.81;
   
     // Asignacion
