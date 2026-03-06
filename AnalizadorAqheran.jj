@@ -13,8 +13,8 @@ import java.nio.charset.StandardCharsets;
 public class AnalizadorAqheran {
 
     // Listas para errores y semántica
-    static ArrayList<String> tabla = new ArrayList<String>();
-    static ArrayList<String> erroresSemanticos = new ArrayList<String>();
+    static ArrayList<String> listaErroresSintacticos = new ArrayList<String>();
+    static ArrayList<String> listaErroresSemanticos = new ArrayList<String>();
     static TablaSimbolos tablaSimbolos = new TablaSimbolos();
     static TablaDirecciones tablaDirecciones = new TablaDirecciones();
     static PilaSemantica pilaSemantica = new PilaSemantica();
@@ -81,7 +81,7 @@ public class AnalizadorAqheran {
     }
 
     public Nodo parse() throws IOException {
-        ArrayList<String> erroresLexicos = AnalizadorAqheranTokenManager.tablaErrores;
+        ArrayList<String> erroresLexicos = AnalizadorAqheranTokenManager.listaErroresLexicos;
         Nodo raiz = null;
         
         try {
@@ -94,22 +94,22 @@ public class AnalizadorAqheran {
                 System.out.println("\n** Analisis LEXICO sin errores. **");
             }
 
-            if (!tabla.isEmpty()) {
+            if (!listaErroresSintacticos.isEmpty()) {
                 System.out.println("\n** Errores SINTACTICOS encontrados: **");
-                for (String err : tabla) System.out.println(err);
+                for (String err : listaErroresSintacticos) System.out.println(err);
             } else {
                 System.out.println("\n** Analisis SINTACTICO sin errores. **");
             }
 
-            if (!erroresSemanticos.isEmpty()) {
+            if (!listaErroresSemanticos.isEmpty()) {
                 System.out.println("\n** Errores SEMANTICOS encontrados: **");
-                for (String err : erroresSemanticos) System.out.println(err);
+                for (String err : listaErroresSemanticos) System.out.println(err);
             } else {
                 System.out.println("\n** Analisis SEMANTICO sin errores. **");
             }
 
         } catch (ParseException e) {
-            tabla.add(manejarErrorSintactico(e));
+            listaErroresSintacticos.add(manejarErrorSintactico(e));
         }
         return raiz;
     }
@@ -138,7 +138,7 @@ public class AnalizadorAqheran {
             return "float";
         }
         
-        erroresSemanticos.add("Error Semantico: Tipos incompatibles [" + t1 + "] y [" + t2 + "] para el operador '" + op + "'");
+        listaErroresSemanticos.add("Error Semantico: Tipos incompatibles [" + t1 + "] y [" + t2 + "] para el operador '" + op + "'");
         return "error";
     }
 
@@ -173,7 +173,7 @@ SKIP:
 
 TOKEN_MGR_DECLS : {
     // Lista para acumular errores lexicos sin detener el proceso
-    static ArrayList<String> tablaErrores = new ArrayList<String>();
+    static ArrayList<String> listaErroresLexicos = new ArrayList<String>();
     static ArrayList<Token> tokensDetectados = new ArrayList<Token>();
 
     static void CommonTokenAction(Token t) {
@@ -297,7 +297,7 @@ TOKEN: // Error Lexico Generico
 {
     <ERROR: ~[]> {
         // Al encontrar un error, lo agregamos a la lista y "quemamos" el caracter para seguir
-        tablaErrores.add("Error Lexico: Caracter invalido '" + image + "' en linea " + input_stream.getBeginLine());
+        listaErroresLexicos.add("Error Lexico: Caracter invalido '" + image + "' en linea " + input_stream.getBeginLine());
     }
 }
 
@@ -339,7 +339,7 @@ Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token tInicio,
             return raiz; 
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(FIN, EOF);
         if (getToken(1).kind == FIN) getNextToken();
         return raiz;
@@ -356,7 +356,7 @@ Nodo Codigo() : { Nodo n; Token t; }
     | LOOKAHEAD(2) n = gramaticaSi() { return n; }
     | LOOKAHEAD(2)n = gramaticaWhile() { return n; }
     | LOOKAHEAD(2) n = gramaticaAsignacion() { return n; }
-    | n = llamarFuncion() { return n; }
+    | LOOKAHEAD(3) n = llamarFuncion() { return n; }
     | LOOKAHEAD(2) n = gramaticaFor() { return n; }
     | n = gramaticaOperadorLogico() { return n; }
     | n = SentenciasFunciones() { return n; }
@@ -366,7 +366,7 @@ Nodo Codigo() : { Nodo n; Token t; }
     | <BREAK> <DELIMITADOR> { return new Nodo("Break"); }
     | t = <IDENTIFICADOR> 
     { 
-        tabla.add("Error Sintactico: La palabra '" + t.image + "' en la linea " + t.beginLine + " no es una instruccion valida. Revise si escribio correctamente 'if', 'while', 'for', 'aqhe', etc."); 
+        listaErroresSintacticos.add("Error Sintactico: La palabra '" + t.image + "' en la linea " + t.beginLine + " no es una instruccion valida. Revise si escribio correctamente 'if', 'while', 'for', 'aqhe', etc."); 
         // Recuperación: saltamos hasta el siguiente punto estable (punto y coma o llave de cierre)
         // para evitar errores en cascada.
         skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
@@ -383,13 +383,13 @@ Nodo declararVariable() : { Token t; Nodo n = new Nodo("Declaracion Variable"); 
             try {
                 tablaSimbolos.insertar(t.image, tipo);
             } catch (Exception e) {
-                erroresSemanticos.add(e.getMessage());
+                listaErroresSemanticos.add(e.getMessage());
             }
             n.agregarHijo(new Nodo(t.image, tipo));
             return n; 
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
@@ -406,7 +406,7 @@ Nodo declararConstante() : { Token t; Nodo n = new Nodo("Declaracion Constante")
                 // Comprobar que el valor asignado sea compatible con el tipo declarado
                 verificarTipo(tipo, v.tipo, "=");
             } catch (Exception e) {
-                erroresSemanticos.add(e.getMessage());
+                listaErroresSemanticos.add(e.getMessage());
             }
             Nodo c = new Nodo(t.image, tipo);
             c.agregarHijo(v);
@@ -414,7 +414,7 @@ Nodo declararConstante() : { Token t; Nodo n = new Nodo("Declaracion Constante")
             return n;
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
@@ -445,7 +445,7 @@ Nodo valor() : { Token t; Nodo n; }
           try {
               tipo = tablaSimbolos.obtenerTipo(t.image);
           } catch (Exception e) {
-              erroresSemanticos.add(e.getMessage());
+              listaErroresSemanticos.add(e.getMessage());
           }
           n = new Nodo(t.image, tipo);
           pilaSemantica.push(n);
@@ -464,8 +464,8 @@ Nodo gramaticaEscribir() : { Nodo n = new Nodo("Escribir"); Nodo hijo; Token t; 
         <PARENDER> <DELIMITADOR>
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
@@ -480,8 +480,8 @@ Nodo gramaticaLeer() : { Token t; Nodo n = new Nodo("Leer"); }
             return n;
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
@@ -496,8 +496,8 @@ Nodo gramaticaSi() : { Nodo n = new Nodo("Si (IF)"); Nodo cond, hijo, sino; }
         ( sino = gramaticaSiNo() { n.agregarHijo(sino); } )*
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
@@ -509,8 +509,8 @@ Nodo gramaticaSiNo() : { Nodo n = new Nodo("Sino (ELSE)"); Nodo hijo; }
         <SINO> <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
@@ -530,7 +530,7 @@ Nodo condicion() : { Nodo izq, der, log; Token t; }
         (log = condicionLogicos() { raiz.agregarHijo(log); })*
         { return raiz; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         if (getToken(1).kind == PARENDER) getNextToken(); // Added for panic mode
         return null;
@@ -550,7 +550,7 @@ Nodo condicionLogicos() : { Nodo n; Token t; Nodo v1, v2; Token comp; }
             return raiz;
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         return null;
     }
@@ -574,8 +574,8 @@ Nodo gramaticaWhile() : { Nodo n = new Nodo("While"); Nodo cond, hijo; }
         <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER> 
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
@@ -598,7 +598,7 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
                 // Si es asignación compuesta, verificamos tipos igual que en asignación normal
                 verificarTipo(tipoDestino, e.tipo, "="); 
             } catch (Exception e_sem) {
-                erroresSemanticos.add(e_sem.getMessage());
+                listaErroresSemanticos.add(e_sem.getMessage());
             }
             n.valor = "Asignacion: " + t.image;
             n.tipo = tipoDestino;
@@ -612,8 +612,8 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
             return n;
         }
     } catch (ParseException e_arg) {
-        tabla.add(manejarErrorSintactico(e_arg));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e_arg));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
@@ -642,7 +642,7 @@ Nodo operacionSimple(): { Nodo izq, der; Token t; }
         )*
         { return izq; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         return null;
     }
@@ -678,8 +678,8 @@ Nodo gramaticaOperadorLogico(): { Token t; Token id; Nodo cond; Nodo n = new Nod
             return n;
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
@@ -696,7 +696,7 @@ Nodo condicionLogico(): { Nodo izq, der; Token t; }
             return raiz;
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         return null;
     }
@@ -710,8 +710,8 @@ Nodo gramaticaFor(): { Nodo n = new Nodo("For"); Nodo cond, hijo; }
         <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
@@ -733,7 +733,7 @@ Nodo condicionFor(): { Token id, id2, val, id3; String tipo; Token comp, inc; No
             return n;
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         return null;
     }
 }
@@ -752,7 +752,7 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
               try {
                   tablaSimbolos.insertar(id.image, tipo); // Registrar retorno de la funcion
               } catch (Exception e_sem) {
-                  erroresSemanticos.add(e_sem.getMessage());
+                  listaErroresSemanticos.add(e_sem.getMessage());
               }
           }
           <LLAVEIZQ> 
@@ -777,7 +777,7 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
               try {
                   tablaSimbolos.insertar(id.image, "void");
               } catch (Exception e_sem) {
-                  erroresSemanticos.add(e_sem.getMessage());
+                  listaErroresSemanticos.add(e_sem.getMessage());
               }
           }
           <LLAVEIZQ> 
@@ -790,8 +790,8 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
           { return n; }
         )
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
@@ -804,7 +804,7 @@ Nodo parametros() : { Token id; String tipo; Nodo n = new Nodo("Parametros"); }
         ( <COMA> id = <IDENTIFICADOR> tipo = tipoDato() { n.agregarHijo(new Nodo(id.image, tipo)); } )*
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
         return null;
     }
@@ -819,8 +819,8 @@ Nodo llamarFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion");
         <DELIMITADOR>
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }
@@ -835,7 +835,7 @@ Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Fun
             try {
                 tipoRet = tablaSimbolos.obtenerTipo(id.image);
             } catch (Exception e) {
-                erroresSemanticos.add(e.getMessage());
+                listaErroresSemanticos.add(e.getMessage());
             }
             n.valor = "Llamada: " + id.image; 
             n.tipo = tipoRet;
@@ -843,7 +843,7 @@ Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Fun
         <PARENIZQ> (v = valor() { n.agregarHijo(v); } (<COMA> v = valor() { n.agregarHijo(v); })*)? <PARENDER>
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(PARENDER, DELIMITADOR, LLAVEDER, FIN, EOF);
         return null;
     }
@@ -863,8 +863,8 @@ Nodo gramaticaSwitch() : { Nodo n = new Nodo("Switch"); Token t; Nodo hijo; }
         <LLAVEDER>
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
@@ -873,7 +873,7 @@ Nodo gramaticaSwitch() : { Nodo n = new Nodo("Switch"); Token t; Nodo hijo; }
 Nodo gramaticaCase() : { Nodo n = new Nodo("Case"); Nodo v; Nodo hijo; }
 {
     <CASE> v = valor() <DOS_PUNTOS>
-    (hijo = Codigo() { n.agregarHijo(hijo); })+
+    (LOOKAHEAD(2) hijo = Codigo() { n.agregarHijo(hijo); })+
     [<BREAK> <DELIMITADOR>]
     { return n; }
 }
@@ -881,7 +881,7 @@ Nodo gramaticaCase() : { Nodo n = new Nodo("Case"); Nodo v; Nodo hijo; }
 Nodo gramaticaDefault() : { Nodo n = new Nodo("Default"); Nodo hijo; }
 {
     <DEFAULT_TOKEN> <DOS_PUNTOS>
-    (hijo = Codigo() { n.agregarHijo(hijo); })+
+    (LOOKAHEAD(2) hijo = Codigo() { n.agregarHijo(hijo); })+
     [<BREAK> <DELIMITADOR>]
     { return n; }
 }
@@ -906,8 +906,8 @@ Nodo gramaticaTryCatch() : { Nodo n = new Nodo("Try-Catch"); Nodo hijo; Token ex
         ]
         { return n; }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
     }
@@ -936,12 +936,12 @@ Nodo declararArreglo() : { Token t; Nodo n; String tipo; Nodo init = null; }
         <DELIMITADOR>
         { 
             try { tablaSimbolos.insertar(t.image, "array_" + tipo); } 
-            catch(Exception e) { erroresSemanticos.add(e.getMessage()); }
+            catch(Exception e) { listaErroresSemanticos.add(e.getMessage()); }
             return n; 
         }
     } catch (ParseException e) {
-        tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        listaErroresSintacticos.add(manejarErrorSintactico(e));
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         return null;
     }

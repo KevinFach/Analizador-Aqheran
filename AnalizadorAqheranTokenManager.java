@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings ("unused")
 public class AnalizadorAqheranTokenManager implements AnalizadorAqheranConstants {
     // Lista para acumular errores lexicos sin detener el proceso
-    static ArrayList<String> tablaErrores = new ArrayList<String>();
+    static ArrayList<String> listaErroresLexicos = new ArrayList<String>();
     static ArrayList<Token> tokensDetectados = new ArrayList<Token>();
 
     static void CommonTokenAction(Token t) {
@@ -954,7 +954,7 @@ static void TokenLexicalActions(Token matchedToken)
       case 74 :
         image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
         // Al encontrar un error, lo agregamos a la lista y "quemamos" el caracter para seguir
-        tablaErrores.add("Error Lexico: Caracter invalido '" + image + "' en linea " + input_stream.getBeginLine());
+        listaErroresLexicos.add("Error Lexico: Caracter invalido '" + image + "' en linea " + input_stream.getBeginLine());
          break;
       default :
          break;

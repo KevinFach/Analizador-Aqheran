@@ -3,16 +3,28 @@ import java.util.Stack;
 public class PilaSemantica {
     private Stack<Object> pilaOperandos = new Stack<>();
     private int contadorTemporales = 1;
+    private final int LIMITE_MAXIMO = 1000; // Límite para evitar desbordamiento
 
     public void push(Object elemento) {
+        if (pilaOperandos.size() >= LIMITE_MAXIMO) {
+            // Reportamos el desbordamiento a nuestra nueva matriz de errores
+            AnalizadorAqheran.listaErroresSemanticos.add("Error Fatal: Desbordamiento de Pila Semantica (Stack Overflow).");
+            return;
+        }
         pilaOperandos.push(elemento);
     }
 
     public Object pop() {
+        if (pilaOperandos.isEmpty()) {
+            // Protección contra subdesbordamiento (Stack Underflow)
+            AnalizadorAqheran.listaErroresSemanticos.add("Error Interno: Subdesbordamiento de Pila Semantica (Intentando extraer de una pila vacia).");
+            return new Nodo("error", "error"); // Retornamos un nodo base para evitar crashear el compilador
+        }
         return pilaOperandos.pop(); 
     }
     
     public Object peek() {
+        if (pilaOperandos.isEmpty()) return null;
         return pilaOperandos.peek();
     }
 
