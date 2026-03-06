@@ -6,17 +6,12 @@ start ProgramaConErrores {
 
     // --- ERRORES SINTACTICOS ---
     // Falta el punto y coma al final de la declaracion
-    @ errorSintactico1 int
+    @ errorSintactico1 int;
     
     // Falta cerrar el parentesis en la condicion del if
     if (10 > 5 {
         aqhe("Esto fallara por sintaxis");
     }
-
-    // Bloque while sin cerrar la llave
-    while (true) {
-        aqhe("Bucle infinito con error");
-    // (Falta } aqui)
 
     // Palabra reservada mal escrita o comando inexistente
     imprimir("Esto no existe");

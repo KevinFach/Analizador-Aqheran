@@ -98,6 +98,7 @@ public class AnalizadorAqheran {
                 System.out.println("\n** Errores SINTACTICOS encontrados: **");
                 for (String err : listaErroresSintacticos) System.out.println(err);
             } else {
+
                 System.out.println("\n** Analisis SINTACTICO sin errores. **");
             }
 
@@ -148,10 +149,11 @@ public class AnalizadorAqheran {
         boolean found = false;
         while (!found) {
             t = getToken(1);
-            if (t.kind == EOF) break;
+            if (t.kind == EOF) break; // Si llega al fin del archivo, ríndete.
+            // Busca en la lista de salvavidas que le pasamos.
             for (int k : kinds) {
                 if (t.kind == k) {
-                    found = true;
+                    found = true; //Aquí puedo volver a empezar.
                     break;
                 }
             }
