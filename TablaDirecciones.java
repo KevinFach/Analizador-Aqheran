@@ -3,10 +3,16 @@ import java.util.Map;
 
 public class TablaDirecciones {
     private Map<String, Integer> literales = new LinkedHashMap<>();
-    private int proximaDireccion = 1000; // Iniciar en un rango diferente para literales
+    private int proximaDireccion = 1000;
+    private static final int LIMITE_SUPERIOR = 2000; // Límite propuesto
 
     public void insertar(String valor) {
         if (!literales.containsKey(valor)) {
+            if (proximaDireccion + 4 > LIMITE_SUPERIOR) {
+                System.err.println(
+                        "ERROR: Se ha excedido el límite de memoria para literales (Límite: " + LIMITE_SUPERIOR + ")");
+                return;
+            }
             literales.put(valor, proximaDireccion);
             proximaDireccion += 4; // Asumimos 4 bytes por simplicidad
         }

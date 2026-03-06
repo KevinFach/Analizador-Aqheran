@@ -381,7 +381,7 @@ try {
             {if ("" != null) return n;}
     } catch (ParseException e) {
 tabla.add(manejarErrorSintactico(e));
-        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, VAR, CONST, SI, WHILE, FOR, EOF);
+        skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
         if (getToken(1).kind == DELIMITADOR) getNextToken();
         {if ("" != null) return null;}
     }

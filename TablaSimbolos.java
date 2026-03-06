@@ -4,6 +4,7 @@ import java.util.Map;
 public class TablaSimbolos {
     private Map<String, Simbolo> simbolos = new LinkedHashMap<>();
     private int proximaDireccion = 0;
+    private static final int LIMITE_SUPERIOR = 1000; // Límite para no chocar con TablaDirecciones
 
     private static class Simbolo {
         String tipo;
@@ -20,6 +21,12 @@ public class TablaSimbolos {
             throw new Exception("Error Semantico: La variable '" + nombre + "' ya fue declarada.");
         }
         int tamano = obtenerTamano(tipo);
+
+        if (proximaDireccion + tamano > LIMITE_SUPERIOR) {
+            throw new Exception("Error de Memoria: Se ha excedido el espacio reservado para variables (Límite: "
+                    + LIMITE_SUPERIOR + ")");
+        }
+
         simbolos.put(nombre, new Simbolo(tipo, proximaDireccion));
         proximaDireccion += tamano;
     }
