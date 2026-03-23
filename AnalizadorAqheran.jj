@@ -62,16 +62,14 @@ public class AnalizadorAqheran {
                     }
                 }
                 
-                /* // Cuadruplos deshabilitados temporalmente ya que PilaSemantica fue modificada
-                List<String> cuadruplos = pilaSemantica.getCuadruplos();
+                List<Cuadruplo> cuadruplos = pilaSemantica.getCuadruplos();
                 if (!cuadruplos.isEmpty() && verbose) {
                     System.out.println("\n--- CODIGO INTERMEDIO (CUADRUPLOS) ---");
-                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
+                    System.out.printf("%-6s %-14s %-14s %s%n", "OP", "ARG1", "ARG2", "RESULTADO");
                     System.out.println("--------------------------------------------");
-                    for (String c : cuadruplos) System.out.println(c);
+                    for (Cuadruplo c : cuadruplos) System.out.println(c);
                     System.out.println("--------------------------------------------");
                 }
-                */
             }
             
         } catch (Exception e) {
@@ -662,11 +660,11 @@ Nodo operacionSimple(): { Nodo izq, der; Token t; }
                 // Sacamos los dos últimos haciendo el casteo a Nodo
                 Nodo opDer = (Nodo) pilaSemantica.pop();
                 Nodo opIzq = (Nodo) pilaSemantica.pop();
-                
+
                 String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
-                
-                // Generamos nodo temporal T# en la pila
-                Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
+
+                // Generamos nodo temporal T# en la pila y emitimos el cuadruplo (op, arg1, arg2, T#)
+                Nodo raiz = pilaSemantica.generarTemporal(tipoRes, t.image, opIzq.valor, opDer.valor);
                 raiz.agregarHijo(opIzq);
                 raiz.agregarHijo(opDer);
                 izq = raiz;
@@ -688,12 +686,13 @@ Nodo termino(): { Nodo izq, der; Token t; }
         {
             Nodo opDer = (Nodo) pilaSemantica.pop();
             Nodo opIzq = (Nodo) pilaSemantica.pop();
-            
+
             String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
-            
-            Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
+
+            // Generamos nodo temporal T# y emitimos cuadruplo (op, arg1, arg2, T#)
+            Nodo raiz = pilaSemantica.generarTemporal(tipoRes, t.image, opIzq.valor, opDer.valor);
             raiz.agregarHijo(opIzq);
-            raiz.agregarHijo(der);
+            raiz.agregarHijo(opDer);
             izq = raiz;
         }
     )*

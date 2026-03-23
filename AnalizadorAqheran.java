@@ -59,16 +59,14 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
                     }
                 }
 
-                /* // Cuadruplos deshabilitados temporalmente ya que PilaSemantica fue modificada
-                List<String> cuadruplos = pilaSemantica.getCuadruplos();
+                List<Cuadruplo> cuadruplos = pilaSemantica.getCuadruplos();
                 if (!cuadruplos.isEmpty() && verbose) {
                     System.out.println("\n--- CODIGO INTERMEDIO (CUADRUPLOS) ---");
-                    System.out.println(String.format("%-5s %-10s %-10s %-10s", "OP", "ARG1", "ARG2", "RESULTADO"));
+                    System.out.printf("%-6s %-14s %-14s %s%n", "OP", "ARG1", "ARG2", "RESULTADO");
                     System.out.println("--------------------------------------------");
-                    for (String c : cuadruplos) System.out.println(c);
+                    for (Cuadruplo c : cuadruplos) System.out.println(c);
                     System.out.println("--------------------------------------------");
                 }
-                */
             }
 
         } catch (Exception e) {
@@ -1018,8 +1016,8 @@ listaErroresSintacticos.add(manejarErrorSintactico(e_arg));
 
                 String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
 
-                // Generamos nodo temporal T# en la pila
-                Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
+                // Generamos nodo temporal T# en la pila y emitimos el cuadruplo (op, arg1, arg2, T#)
+                Nodo raiz = pilaSemantica.generarTemporal(tipoRes, t.image, opIzq.valor, opDer.valor);
                 raiz.agregarHijo(opIzq);
                 raiz.agregarHijo(opDer);
                 izq = raiz;
@@ -1072,9 +1070,10 @@ Nodo opDer = (Nodo) pilaSemantica.pop();
 
             String tipoRes = verificarTipo(opIzq.tipo, opDer.tipo, t.image);
 
-            Nodo raiz = pilaSemantica.generarTemporal(tipoRes);
+            // Generamos nodo temporal T# y emitimos cuadruplo (op, arg1, arg2, T#)
+            Nodo raiz = pilaSemantica.generarTemporal(tipoRes, t.image, opIzq.valor, opDer.valor);
             raiz.agregarHijo(opIzq);
-            raiz.agregarHijo(der);
+            raiz.agregarHijo(opDer);
             izq = raiz;
     }
 {if ("" != null) return izq;}
@@ -1930,25 +1929,31 @@ n.agregarHijo(v);
     finally { jj_save(8, xla); }
   }
 
-  static private boolean jj_3R_Codigo_364_15_38()
+  static private boolean jj_3R_Codigo_364_15_40()
  {
-    if (jj_3R_declararConstante_433_5_50()) return true;
+    if (jj_3R_gramaticaLeer_506_5_52()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_363_15_37()
+  static private boolean jj_3R_Codigo_363_15_39()
  {
-    if (jj_3R_declararArreglo_950_5_49()) return true;
+    if (jj_3R_gramaticaEscribir_488_5_51()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_362_15_36()
+  static private boolean jj_3R_Codigo_362_15_38()
  {
-    if (jj_3R_declararVariable_412_5_48()) return true;
+    if (jj_3R_declararConstante_431_5_50()) return true;
     return false;
   }
 
-  static private boolean jj_3R_llamarFuncion_847_5_29()
+  static private boolean jj_3R_Codigo_361_15_37()
+ {
+    if (jj_3R_declararArreglo_949_5_49()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_llamarFuncion_846_5_29()
  {
     if (jj_scan_token(FUNC)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
@@ -1956,60 +1961,66 @@ n.agregarHijo(v);
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_461_7_63()
+  static private boolean jj_3R_Codigo_360_15_36()
+ {
+    if (jj_3R_declararVariable_410_5_48()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_459_7_63()
  {
     if (jj_scan_token(STRING)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_460_7_62()
+  static private boolean jj_3R_tipoDato_458_7_62()
  {
     if (jj_scan_token(BOOL)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_459_7_61()
+  static private boolean jj_3R_tipoDato_457_7_61()
  {
     if (jj_scan_token(FLOAT)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_458_5_60()
+  static private boolean jj_3R_tipoDato_456_5_60()
  {
     if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_458_5_59()
+  static private boolean jj_3R_tipoDato_456_5_59()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_tipoDato_458_5_60()) {
+    if (jj_3R_tipoDato_456_5_60()) {
     jj_scanpos = xsp;
-    if (jj_3R_tipoDato_459_7_61()) {
+    if (jj_3R_tipoDato_457_7_61()) {
     jj_scanpos = xsp;
-    if (jj_3R_tipoDato_460_7_62()) {
+    if (jj_3R_tipoDato_458_7_62()) {
     jj_scanpos = xsp;
-    if (jj_3R_tipoDato_461_7_63()) return true;
+    if (jj_3R_tipoDato_459_7_63()) return true;
     }
     }
     }
     return false;
   }
 
-  static private boolean jj_3R_Codigo_360_5_33()
+  static private boolean jj_3R_Codigo_358_5_33()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_Codigo_362_15_36()) {
+    if (jj_3R_Codigo_360_15_36()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_363_15_37()) {
+    if (jj_3R_Codigo_361_15_37()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_364_15_38()) {
+    if (jj_3R_Codigo_362_15_38()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_365_15_39()) {
+    if (jj_3R_Codigo_363_15_39()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_366_15_40()) {
+    if (jj_3R_Codigo_364_15_40()) {
     jj_scanpos = xsp;
     if (jj_3_1()) {
     jj_scanpos = xsp;
@@ -2021,23 +2032,23 @@ n.agregarHijo(v);
     jj_scanpos = xsp;
     if (jj_3_5()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_372_15_41()) {
+    if (jj_3R_Codigo_370_15_41()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_373_15_42()) {
+    if (jj_3R_Codigo_371_15_42()) {
     jj_scanpos = xsp;
     if (jj_3_6()) {
     jj_scanpos = xsp;
     if (jj_3_7()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_376_15_43()) {
+    if (jj_3R_Codigo_374_15_43()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_377_15_44()) {
+    if (jj_3R_Codigo_375_15_44()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_378_15_45()) {
+    if (jj_3R_Codigo_376_15_45()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_385_15_46()) {
+    if (jj_3R_Codigo_383_15_46()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_392_15_47()) return true;
+    if (jj_3R_Codigo_390_15_47()) return true;
     }
     }
     }
@@ -2059,14 +2070,14 @@ n.agregarHijo(v);
     return false;
   }
 
-  static private boolean jj_3R_gramaticaFor_739_5_30()
+  static private boolean jj_3R_gramaticaFor_738_5_30()
  {
     if (jj_scan_token(FOR)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaTryCatch_923_5_32()
+  static private boolean jj_3R_gramaticaTryCatch_922_5_32()
  {
     if (jj_scan_token(TRY)) return true;
     if (jj_scan_token(LLAVEIZQ)) return true;
@@ -2075,11 +2086,11 @@ n.agregarHijo(v);
 
   static private boolean jj_3_9()
  {
-    if (jj_3R_Codigo_360_5_33()) return true;
+    if (jj_3R_Codigo_358_5_33()) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_623_11_35()
+  static private boolean jj_3R_gramaticaAsignacion_621_11_35()
  {
     Token xsp;
     xsp = jj_scanpos;
@@ -2096,7 +2107,7 @@ n.agregarHijo(v);
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_621_11_34()
+  static private boolean jj_3R_gramaticaAsignacion_619_11_34()
  {
     if (jj_scan_token(IGUAL)) return true;
     return false;
@@ -2104,143 +2115,143 @@ n.agregarHijo(v);
 
   static private boolean jj_3_8()
  {
-    if (jj_3R_Codigo_360_5_33()) return true;
+    if (jj_3R_Codigo_358_5_33()) return true;
     return false;
   }
 
-  static private boolean jj_3R_declararConstante_433_5_50()
+  static private boolean jj_3R_declararConstante_431_5_50()
  {
     if (jj_scan_token(CONST)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_SentenciasFunciones_806_9_58()
+  static private boolean jj_3R_SentenciasFunciones_805_9_58()
  {
     if (jj_scan_token(VOID)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaSi_524_5_26()
+  static private boolean jj_3R_gramaticaSi_522_5_26()
  {
     if (jj_scan_token(SI)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_618_5_28()
+  static private boolean jj_3R_gramaticaAsignacion_616_5_28()
  {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_gramaticaAsignacion_621_11_34()) {
+    if (jj_3R_gramaticaAsignacion_619_11_34()) {
     jj_scanpos = xsp;
-    if (jj_3R_gramaticaAsignacion_623_11_35()) return true;
+    if (jj_3R_gramaticaAsignacion_621_11_35()) return true;
     }
     return false;
   }
 
-  static private boolean jj_3R_gramaticaOperadorLogico_705_5_53()
+  static private boolean jj_3R_gramaticaOperadorLogico_704_5_53()
  {
     if (jj_scan_token(BOOL)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaLeer_508_5_52()
+  static private boolean jj_3R_gramaticaLeer_506_5_52()
  {
     if (jj_scan_token(LEER)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaWhile_603_5_27()
+  static private boolean jj_3R_gramaticaWhile_601_5_27()
  {
     if (jj_scan_token(WHILE)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_declararVariable_412_5_48()
+  static private boolean jj_3R_declararVariable_410_5_48()
  {
     if (jj_scan_token(VAR)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaSwitch_886_5_31()
+  static private boolean jj_3R_gramaticaSwitch_885_5_31()
  {
     if (jj_scan_token(SWITCH)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_SentenciasFunciones_781_9_57()
+  static private boolean jj_3R_SentenciasFunciones_780_9_57()
  {
     if (jj_scan_token(FUNC)) return true;
-    if (jj_3R_tipoDato_458_5_59()) return true;
+    if (jj_3R_tipoDato_456_5_59()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_392_15_47()
+  static private boolean jj_3R_Codigo_390_15_47()
  {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_SentenciasFunciones_780_5_54()
+  static private boolean jj_3R_SentenciasFunciones_779_5_54()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_SentenciasFunciones_781_9_57()) {
+    if (jj_3R_SentenciasFunciones_780_9_57()) {
     jj_scanpos = xsp;
-    if (jj_3R_SentenciasFunciones_806_9_58()) return true;
+    if (jj_3R_SentenciasFunciones_805_9_58()) return true;
     }
     return false;
   }
 
-  static private boolean jj_3R_declararArreglo_960_13_56()
+  static private boolean jj_3R_declararArreglo_959_13_56()
  {
     if (jj_scan_token(MATRIZ)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_385_15_46()
+  static private boolean jj_3R_Codigo_383_15_46()
  {
     if (jj_scan_token(CATCH)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaEscribir_490_5_51()
+  static private boolean jj_3R_gramaticaEscribir_488_5_51()
  {
     if (jj_scan_token(ESCRIBIR)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_declararArreglo_952_13_55()
+  static private boolean jj_3R_declararArreglo_951_13_55()
  {
     if (jj_scan_token(VECTOR)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_378_15_45()
+  static private boolean jj_3R_Codigo_376_15_45()
  {
     if (jj_scan_token(SINO)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_377_15_44()
+  static private boolean jj_3R_Codigo_375_15_44()
  {
     if (jj_scan_token(BREAK)) return true;
     if (jj_scan_token(DELIMITADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_376_15_43()
+  static private boolean jj_3R_Codigo_374_15_43()
  {
     if (jj_scan_token(CONTINUE)) return true;
     if (jj_scan_token(DELIMITADOR)) return true;
@@ -2249,78 +2260,66 @@ n.agregarHijo(v);
 
   static private boolean jj_3_7()
  {
-    if (jj_3R_gramaticaTryCatch_923_5_32()) return true;
+    if (jj_3R_gramaticaTryCatch_922_5_32()) return true;
     return false;
   }
 
   static private boolean jj_3_6()
  {
-    if (jj_3R_gramaticaSwitch_886_5_31()) return true;
+    if (jj_3R_gramaticaSwitch_885_5_31()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_373_15_42()
+  static private boolean jj_3R_Codigo_371_15_42()
  {
-    if (jj_3R_SentenciasFunciones_780_5_54()) return true;
+    if (jj_3R_SentenciasFunciones_779_5_54()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_372_15_41()
+  static private boolean jj_3R_Codigo_370_15_41()
  {
-    if (jj_3R_gramaticaOperadorLogico_705_5_53()) return true;
+    if (jj_3R_gramaticaOperadorLogico_704_5_53()) return true;
     return false;
   }
 
   static private boolean jj_3_5()
  {
-    if (jj_3R_gramaticaFor_739_5_30()) return true;
+    if (jj_3R_gramaticaFor_738_5_30()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_declararArreglo_949_5_49()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_declararArreglo_951_13_55()) {
+    jj_scanpos = xsp;
+    if (jj_3R_declararArreglo_959_13_56()) return true;
+    }
     return false;
   }
 
   static private boolean jj_3_4()
  {
-    if (jj_3R_llamarFuncion_847_5_29()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_declararArreglo_950_5_49()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_declararArreglo_952_13_55()) {
-    jj_scanpos = xsp;
-    if (jj_3R_declararArreglo_960_13_56()) return true;
-    }
+    if (jj_3R_llamarFuncion_846_5_29()) return true;
     return false;
   }
 
   static private boolean jj_3_3()
  {
-    if (jj_3R_gramaticaAsignacion_618_5_28()) return true;
+    if (jj_3R_gramaticaAsignacion_616_5_28()) return true;
     return false;
   }
 
   static private boolean jj_3_2()
  {
-    if (jj_3R_gramaticaWhile_603_5_27()) return true;
+    if (jj_3R_gramaticaWhile_601_5_27()) return true;
     return false;
   }
 
   static private boolean jj_3_1()
  {
-    if (jj_3R_gramaticaSi_524_5_26()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_Codigo_366_15_40()
- {
-    if (jj_3R_gramaticaLeer_508_5_52()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_Codigo_365_15_39()
- {
-    if (jj_3R_gramaticaEscribir_490_5_51()) return true;
+    if (jj_3R_gramaticaSi_522_5_26()) return true;
     return false;
   }
 

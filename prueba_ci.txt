@@ -1,0 +1,28 @@
+start PruebaCodIntermedio {
+    // Variables para las expresiones
+    @ a int;
+    @ b int;
+    @ c int;
+    @ d int;
+    @ resultado int;
+
+    a = 1;
+    b = 2;
+    c = 3;
+    d = 4;
+
+    // Expresion: a + b * c - d  ->  postfija: a b c * + d -
+    // Cuadruplos esperados:
+    //   (*, b, c, T1)
+    //   (+, a, T1, T2)
+    //   (-, T2, d, T3)
+    resultado = a + b * c - d;
+
+    // Expresion con parentesis: (a + b) * c
+    // Postfija: a b + c *
+    // Cuadruplos:
+    //   (+, a, b, T4)
+    //   (*, T4, c, T5)
+    resultado = (a + b) * c;
+}
+end
