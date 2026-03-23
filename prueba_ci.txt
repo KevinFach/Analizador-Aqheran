@@ -1,28 +1,61 @@
 start PruebaCodIntermedio {
-    // Variables para las expresiones
+    // ==============================
+    // 1. Declaraciones de variables
+    // ==============================
     @ a int;
     @ b int;
     @ c int;
     @ d int;
     @ resultado int;
+    @ contador int;
 
+    // ==============================
+    // 2. Asignaciones simples (:=)
+    // ==============================
     a = 1;
     b = 2;
     c = 3;
     d = 4;
 
-    // Expresion: a + b * c - d  ->  postfija: a b c * + d -
-    // Cuadruplos esperados:
+    // ==============================
+    // 3. Expresiones aritmeticas (cuadruplos *, +, -)
+    // ==============================
+    // Esperado:
     //   (*, b, c, T1)
     //   (+, a, T1, T2)
     //   (-, T2, d, T3)
+    //   (:=, T3, _, resultado)
     resultado = a + b * c - d;
 
     // Expresion con parentesis: (a + b) * c
-    // Postfija: a b + c *
-    // Cuadruplos:
+    // Esperado:
     //   (+, a, b, T4)
     //   (*, T4, c, T5)
+    //   (:=, T5, _, resultado)
     resultado = (a + b) * c;
+
+    // ==============================
+    // 4. I/O: WRITE y READ
+    // ==============================
+    aqhe("Resultado: " & resultado);
+    readline(a);
+
+    // ==============================
+    // 5. Condicional: IF / ELSE (JF, JMP, LABEL)
+    // ==============================
+    if (a >= 10) {
+        aqhe("a es mayor o igual a 10");
+    } else {
+        aqhe("a es menor que 10");
+    }
+
+    // ==============================
+    // 6. Bucle: WHILE (LABEL, JF, JMP)
+    // ==============================
+    contador = 0;
+    while (contador < 5) {
+        aqhe("Iteracion: " & contador);
+        contador += 1;
+    }
 }
 end

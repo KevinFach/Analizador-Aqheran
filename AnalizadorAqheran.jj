@@ -310,15 +310,7 @@ Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token tInicio,
     try {
         tInicio = <INICIO> tId = <IDENTIFICADOR> { raiz.valor = "Programa: " + tId.image; } tLlaveIzq = <LLAVEIZQ>
         {
-            // Ejemplificando apilado en orden RID (Raíz - Izquierda - Derecha)
-            pilaSemantica.push(raiz);
-            pilaSemantica.push(tInicio);
-            pilaSemantica.push(tId);
-            pilaSemantica.push(tLlaveIzq);
-            if (verbose) {
-                System.out.println("\n[INFO] Estado de la pila al iniciar bloque principal (Orden RID)");
-                pilaSemantica.imprimirPila("RID - Inicio");
-            }
+            // Pila semantica limpia: no apilamos tokens de estructura
         }
         ( 
             LOOKAHEAD( { getToken(1).kind != EOF && !(getToken(1).kind == LLAVEDER && getToken(2).kind == FIN) } )
@@ -334,15 +326,6 @@ Nodo principal() : { Nodo raiz = new Nodo("Programa"); Nodo hijo; Token tInicio,
         )*
         tLlaveDer = <LLAVEDER> tFin = <FIN>
         { 
-            // Ejemplificando apilado en orden IDR (Izquierda - Derecha - Raíz)
-            pilaSemantica.push(tLlaveDer);
-            pilaSemantica.push(tFin);
-            pilaSemantica.push(raiz); // Raíz al final como resolución bottom-up
-            if (verbose) {
-                System.out.println("\n[INFO] Estado de la pila al finalizar bloque principal (Orden IDR)");
-                pilaSemantica.imprimirPila("IDR - Fin");
-            }
-            
             return raiz; 
         }
     } catch (ParseException e) {
@@ -488,8 +471,8 @@ Nodo gramaticaEscribir() : { Nodo n = new Nodo("Escribir"); Nodo hijo; Token t; 
     try {
         <ESCRIBIR> <PARENIZQ>  
         (    
-            ( t = <VCAD> { n.agregarHijo(new Nodo(t.image, "string")); } | t = <IDENTIFICADOR> { n.agregarHijo(new Nodo(t.image, "id")); } )
-            ( <CONCATENAR> ( t = <VCAD> { n.agregarHijo(new Nodo(t.image, "string")); } | t = <IDENTIFICADOR> { n.agregarHijo(new Nodo(t.image, "id")); } ) )*
+            ( t = <VCAD> { n.agregarHijo(new Nodo(t.image, "string")); pilaSemantica.emitirWrite(t.image); } | t = <IDENTIFICADOR> { n.agregarHijo(new Nodo(t.image, "id")); pilaSemantica.emitirWrite(t.image); } )
+            ( <CONCATENAR> ( t = <VCAD> { n.agregarHijo(new Nodo(t.image, "string")); pilaSemantica.emitirWrite(t.image); } | t = <IDENTIFICADOR> { n.agregarHijo(new Nodo(t.image, "id")); pilaSemantica.emitirWrite(t.image); } ) )*
         )+
         <PARENDER> <DELIMITADOR>
         { return n; }
@@ -507,6 +490,7 @@ Nodo gramaticaLeer() : { Token t; Nodo n = new Nodo("Leer"); }
         <LEER> <PARENIZQ> t = <IDENTIFICADOR> <PARENDER> <DELIMITADOR>
         {
             n.agregarHijo(new Nodo(t.image, "id"));
+            pilaSemantica.emitirRead(t.image);
             return n;
         }
     } catch (ParseException e) {
@@ -517,14 +501,26 @@ Nodo gramaticaLeer() : { Token t; Nodo n = new Nodo("Leer"); }
     }
 }
 
-Nodo gramaticaSi() : { Nodo n = new Nodo("Si (IF)"); Nodo cond, hijo, sino; }
+Nodo gramaticaSi() : { Nodo n = new Nodo("Si (IF)"); Nodo cond, hijo, sino; String lElse, lFin; }
 {
     try {
         <SI> <PARENIZQ> cond = condicion() <PARENDER> 
-        { n.agregarHijo(cond); }
+        { 
+            n.agregarHijo(cond); 
+            lElse = pilaSemantica.nuevaEtiqueta();
+            lFin = pilaSemantica.nuevaEtiqueta();
+            pilaSemantica.emitirSaltoCondicional(cond.valor, lElse);
+        }
         <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        {
+            pilaSemantica.emitirSalto(lFin);
+            pilaSemantica.emitirLabel(lElse);
+        }
         ( sino = gramaticaSiNo() { n.agregarHijo(sino); } )*
-        { return n; }
+        {
+            pilaSemantica.emitirLabel(lFin);
+            return n; 
+        }
     } catch (ParseException e) {
         listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(LLAVEDER, FIN, EOF);
@@ -552,17 +548,20 @@ Nodo condicion() : { Nodo izq, der, log; Token t; }
         izq = valor() t = OperadoresComparadores() der = valor()
         {
             String tipoRes = verificarTipo(izq.tipo, der.tipo, t.image);
-            if (!tipoRes.equals("error")) tipoRes = "bool"; // El resultado de una comparación es boolean
-            Nodo raiz = new Nodo(t.image, tipoRes);
+            if (!tipoRes.equals("error")) tipoRes = "bool";
+            String tempCond = "T" + System.identityHashCode(t); // temporal unico para la condicion
+            Nodo raiz = new Nodo(tempCond, tipoRes);
             raiz.agregarHijo(izq);
             raiz.agregarHijo(der);
+            // Emitir cuadruplo de comparacion
+            pilaSemantica.emitir(t.image, izq.valor, der.valor, tempCond);
         }
         (log = condicionLogicos() { raiz.agregarHijo(log); })*
         { return raiz; }
     } catch (ParseException e) {
         listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(PARENDER, LLAVEIZQ, DELIMITADOR, FIN, EOF);
-        if (getToken(1).kind == PARENDER) getNextToken(); // Added for panic mode
+        if (getToken(1).kind == PARENDER) getNextToken();
         return null;
     }
 }
@@ -596,13 +595,26 @@ Token OperadoresComparadores() : { Token t; }
     t = <IGUALDAD> { return t; } | t = <DESIGUALDAD> { return t; } | t = <MAYOR> { return t; } | t = <MENOR> { return t; } | t = <MAYORIGUAL> { return t; } | t = <MENORIGUAL> { return t; }
 }
 
-Nodo gramaticaWhile() : { Nodo n = new Nodo("While"); Nodo cond, hijo; }
+Nodo gramaticaWhile() : { Nodo n = new Nodo("While"); Nodo cond, hijo; String lInicio, lFin; }
 {
     try{
-        <WHILE> <PARENIZQ> cond = condicion() <PARENDER> 
-        { n.agregarHijo(cond); }
+        <WHILE> 
+        {
+            lInicio = pilaSemantica.nuevaEtiqueta();
+            lFin = pilaSemantica.nuevaEtiqueta();
+            pilaSemantica.emitirLabel(lInicio);
+        }
+        <PARENIZQ> cond = condicion() <PARENDER> 
+        { 
+            n.agregarHijo(cond); 
+            pilaSemantica.emitirSaltoCondicional(cond.valor, lFin);
+        }
         <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER> 
-        { return n; }
+        { 
+            pilaSemantica.emitirSalto(lInicio);
+            pilaSemantica.emitirLabel(lFin);
+            return n; 
+        }
     } catch (ParseException e) {
         listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(LLAVEDER, FIN, EOF);
@@ -625,7 +637,6 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
             String tipoDestino = "error";
             try {
                 tipoDestino = tablaSimbolos.obtenerTipo(t.image);
-                // Si es asignación compuesta, verificamos tipos igual que en asignación normal
                 verificarTipo(tipoDestino, e.tipo, "="); 
             } catch (Exception e_sem) {
                 listaErroresSemanticos.add(e_sem.getMessage());
@@ -634,10 +645,8 @@ Nodo gramaticaAsignacion(): { Token t; Nodo e; Nodo n = new Nodo("Asignacion"); 
             n.tipo = tipoDestino;
             n.agregarHijo(e);
             
-            if (!pilaSemantica.isEmpty()) {
-                Object tope = pilaSemantica.pop();
-                // Si solo queriamos sacarlo de la pila porque ya se resolvió la asignacion
-            }
+            // Emitir cuadruplo de asignacion
+            pilaSemantica.emitirAsignacion(e.valor, t.image);
             
             return n;
         }
@@ -781,7 +790,7 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
           <FUNC> tipo = tipoDato() id = <IDENTIFICADOR> <PARENIZQ> [param = parametros()] <PARENDER>
           {
               try {
-                  tablaSimbolos.insertar(id.image, tipo); // Registrar retorno de la funcion
+                  tablaSimbolos.insertar(id.image, tipo);
               } catch (Exception e_sem) {
                   listaErroresSemanticos.add(e_sem.getMessage());
               }
@@ -790,6 +799,7 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
           { 
               n = new Nodo("Funcion: " + id.image, tipo); 
               if (param != null) n.agregarHijo(param);
+              pilaSemantica.emitirLabel("fn_" + id.image);
           }
           (hijo = Codigo() { n.agregarHijo(hijo); })* 
           <RETURN> ret = valor() <DELIMITADOR> <LLAVEDER> <DELIMITADOR>
@@ -798,6 +808,7 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
               Nodo retNode = new Nodo("Return", ret.tipo);
               retNode.agregarHijo(ret);
               n.agregarHijo(retNode);
+              pilaSemantica.emitirReturn(ret.valor);
               return n; 
           }
         )
@@ -815,6 +826,7 @@ Nodo SentenciasFunciones() : { Token id; String tipo; Nodo param = null, hijo, r
           { 
               n = new Nodo("Procedimiento: " + id.image, "void"); 
               if (param != null) n.agregarHijo(param);
+              pilaSemantica.emitirLabel("fn_" + id.image);
           }
           (hijo = Codigo() { n.agregarHijo(hijo); })* 
           <LLAVEDER> <DELIMITADOR>
@@ -841,14 +853,17 @@ Nodo parametros() : { Token id; String tipo; Nodo n = new Nodo("Parametros"); }
     }
 }
 
-Nodo llamarFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion"); }
+Nodo llamarFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion"); int numArgs = 0; }
 {
     try{
         <FUNC> id = <IDENTIFICADOR>
         { n.valor = "Llamada: " + id.image; }
-        <PARENIZQ> (v = valor() { n.agregarHijo(v); } (<COMA> v = valor() { n.agregarHijo(v); })*)? <PARENDER> 
+        <PARENIZQ> (v = valor() { n.agregarHijo(v); numArgs++; } (<COMA> v = valor() { n.agregarHijo(v); numArgs++; })*)? <PARENDER> 
         <DELIMITADOR>
-        { return n; }
+        { 
+            pilaSemantica.emitirCall(id.image, numArgs, "_");
+            return n; 
+        }
     } catch (ParseException e) {
         listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(DELIMITADOR, LLAVEDER, FIN, EOF);
@@ -857,7 +872,7 @@ Nodo llamarFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion");
     }
 }
 
-Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion"); }
+Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Funcion"); int numArgs = 0; }
 {
     try{
         <FUNC> id = <IDENTIFICADOR>
@@ -871,8 +886,13 @@ Nodo asignacionConFuncion() : { Token id; Nodo v; Nodo n = new Nodo("Llamada Fun
             n.valor = "Llamada: " + id.image; 
             n.tipo = tipoRet;
         }
-        <PARENIZQ> (v = valor() { n.agregarHijo(v); } (<COMA> v = valor() { n.agregarHijo(v); })*)? <PARENDER>
-        { return n; }
+        <PARENIZQ> (v = valor() { n.agregarHijo(v); numArgs++; } (<COMA> v = valor() { n.agregarHijo(v); numArgs++; })*)? <PARENDER>
+        { 
+            String tempRet = "T_ret_" + id.image;
+            pilaSemantica.emitirCall(id.image, numArgs, tempRet);
+            n.valor = tempRet;
+            return n; 
+        }
     } catch (ParseException e) {
         listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(PARENDER, DELIMITADOR, LLAVEDER, FIN, EOF);
