@@ -57,5 +57,36 @@ start PruebaCodIntermedio {
         aqhe("Iteracion: " & contador);
         contador += 1;
     }
+
+    // ==============================
+    // 7. Try / Catch / Finally
+    // ==============================
+    // Esperado:
+    //   (TRY_BEGIN, _, _, L#)     entrada primer catch
+    //   (:=, 0, _, resultado)     cuerpo try
+    //   (TRY_END, _, _, L#)       salta a finally
+    //   (LABEL, _, _, L#)         entrada catch
+    //   (:=, IOException, _, ex)  bind excepcion
+    //   (WRITE, "Error de IO", _, _)
+    //   (JMP, _, _, L#)           salta a finally
+    //   (LABEL, _, _, L#)         etiqueta muerta
+    //   (LABEL, _, _, L#)         finally
+    //   (WRITE, "Fin del bloque", _, _)
+    try {
+        resultado = 0;
+    } catch (IOException ex) {
+        aqhe("Error de IO");
+    } finally {
+        aqhe("Fin del bloque");
+    }
+
+    // Dos catches sin finally:
+    try {
+        a = 1;
+    } catch (IOException e1) {
+        aqhe("IO");
+    } catch (RuntimeException e2) {
+        aqhe("Runtime");
+    }
 }
 end

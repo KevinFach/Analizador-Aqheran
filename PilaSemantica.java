@@ -125,6 +125,16 @@ public class PilaSemantica {
         cuadruplos.add(new Cuadruplo("RET", valor, "_", "_"));
     }
 
+    /** Inicio de bloque try: (TRY_BEGIN, _, _, L_catch) */
+    public void emitirTryBegin(String lCatch) {
+        cuadruplos.add(new Cuadruplo("TRY_BEGIN", "_", "_", lCatch));
+    }
+
+    /** Fin de bloque try: (TRY_END, _, _, L_finally) */
+    public void emitirTryEnd(String lFinally) {
+        cuadruplos.add(new Cuadruplo("TRY_END", "_", "_", lFinally));
+    }
+
     // ----------------------------------------------------------------
     // GESTION DE BUCLES (break / continue)
     // ----------------------------------------------------------------
