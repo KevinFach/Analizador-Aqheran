@@ -296,13 +296,17 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
               case CONTINUE:{
                 jj_consume_token(CONTINUE);
                 jj_consume_token(DELIMITADOR);
-{if ("" != null) return new Nodo("Continue");}
+String lCont = pilaSemantica.getLabelContinue();
+                if (!lCont.equals("_")) pilaSemantica.emitirSalto(lCont);
+                {if ("" != null) return new Nodo("Continue");}
                 break;
                 }
               case BREAK:{
                 jj_consume_token(BREAK);
                 jj_consume_token(DELIMITADOR);
-{if ("" != null) return new Nodo("Break");}
+String lBreak = pilaSemantica.getLabelBreak();
+                if (!lBreak.equals("_")) pilaSemantica.emitirSalto(lBreak);
+                {if ("" != null) return new Nodo("Break");}
                 break;
                 }
               case SINO:{
@@ -360,6 +364,9 @@ try {
             } catch (Exception e) {
                 listaErroresSemanticos.add(e.getMessage());
             }
+            // 2.3.1 – emitir valor por defecto al declarar la variable
+            String valorDefault = tipo.equals("float") ? "0.0" : tipo.equals("bool") ? "false" : tipo.equals("string") ? "\"\"" : "0";
+            pilaSemantica.emitirAsignacion(valorDefault, t.image);
             n.agregarHijo(new Nodo(t.image, tipo));
             {if ("" != null) return n;}
     } catch (ParseException e) {
@@ -386,6 +393,8 @@ try {
             } catch (Exception e) {
                 listaErroresSemanticos.add(e.getMessage());
             }
+            // 2.3.1 – emitir asignacion de la constante
+            pilaSemantica.emitirAsignacion(v.valor, t.image);
             Nodo c = new Nodo(t.image, tipo);
             c.agregarHijo(v);
             n.agregarHijo(c);
@@ -473,8 +482,29 @@ n = new Nodo(t.image, "null"); pilaSemantica.push(n); tablaDirecciones.insertar(
 {if ("" != null) return n;}
       break;
       }
-    case IDENTIFICADOR:{
-      t = jj_consume_token(IDENTIFICADOR);
+    default:
+      jj_la1[5] = jj_gen;
+      if (jj_2_8(2147483647)) {
+        t = jj_consume_token(IDENTIFICADOR);
+        jj_consume_token(CORCHIZQ);
+        n = operacionSimple();
+        jj_consume_token(CORCHDER);
+String tipoBase = "error";
+          try {
+              String tipoArray = tablaSimbolos.obtenerTipo(t.image);
+              tipoBase = tipoArray.startsWith("array_") ? tipoArray.substring(6) : tipoArray;
+          } catch (Exception e) {
+              listaErroresSemanticos.add(e.getMessage());
+          }
+          String temp = pilaSemantica.nuevaTemporal();
+          pilaSemantica.emitir("[]", t.image, n.valor, temp);
+          Nodo acceso = new Nodo(temp, tipoBase);
+          pilaSemantica.push(acceso);
+          {if ("" != null) return acceso;}
+      } else {
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case IDENTIFICADOR:{
+          t = jj_consume_token(IDENTIFICADOR);
 String tipo = "error";
           try {
               tipo = tablaSimbolos.obtenerTipo(t.image);
@@ -484,12 +514,14 @@ String tipo = "error";
           n = new Nodo(t.image, tipo);
           pilaSemantica.push(n);
           {if ("" != null) return n;}
-      break;
+          break;
+          }
+        default:
+          jj_la1[6] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
       }
-    default:
-      jj_la1[5] = jj_gen;
-      jj_consume_token(-1);
-      throw new ParseException();
     }
     throw new Error("Missing return statement in function");
 }
@@ -512,7 +544,7 @@ n.agregarHijo(new Nodo(t.image, "id")); pilaSemantica.emitirWrite(t.image);
           break;
           }
         default:
-          jj_la1[6] = jj_gen;
+          jj_la1[7] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -524,7 +556,7 @@ n.agregarHijo(new Nodo(t.image, "id")); pilaSemantica.emitirWrite(t.image);
             break;
             }
           default:
-            jj_la1[7] = jj_gen;
+            jj_la1[8] = jj_gen;
             break label_3;
           }
           jj_consume_token(CONCATENAR);
@@ -540,7 +572,7 @@ n.agregarHijo(new Nodo(t.image, "id")); pilaSemantica.emitirWrite(t.image);
             break;
             }
           default:
-            jj_la1[8] = jj_gen;
+            jj_la1[9] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -552,7 +584,7 @@ n.agregarHijo(new Nodo(t.image, "id")); pilaSemantica.emitirWrite(t.image);
           break;
           }
         default:
-          jj_la1[9] = jj_gen;
+          jj_la1[10] = jj_gen;
           break label_2;
         }
       }
@@ -626,7 +658,7 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[10] = jj_gen;
+          jj_la1[11] = jj_gen;
           break label_4;
         }
       }
@@ -641,7 +673,7 @@ pilaSemantica.emitirSalto(lFin);
           break;
           }
         default:
-          jj_la1[11] = jj_gen;
+          jj_la1[12] = jj_gen;
           break label_5;
         }
         sino = gramaticaSiNo();
@@ -690,7 +722,7 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[12] = jj_gen;
+          jj_la1[13] = jj_gen;
           break label_6;
         }
       }
@@ -712,7 +744,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
       der = valor();
 String tipoRes = verificarTipo(izq.tipo, der.tipo, t.image);
             if (!tipoRes.equals("error")) tipoRes = "bool";
-            String tempCond = "T" + System.identityHashCode(t); // temporal unico para la condicion
+            String tempCond = pilaSemantica.nuevaTemporal(); // 2.3.2 – temporal determinista
             Nodo raiz = new Nodo(tempCond, tipoRes);
             raiz.agregarHijo(izq);
             raiz.agregarHijo(der);
@@ -728,7 +760,7 @@ String tipoRes = verificarTipo(izq.tipo, der.tipo, t.image);
           break;
           }
         default:
-          jj_la1[13] = jj_gen;
+          jj_la1[14] = jj_gen;
           break label_7;
         }
         log = condicionLogicos();
@@ -782,7 +814,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
       break;
       }
     default:
-      jj_la1[14] = jj_gen;
+      jj_la1[15] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -822,7 +854,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
       break;
       }
     default:
-      jj_la1[15] = jj_gen;
+      jj_la1[16] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -833,8 +865,10 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
     try {
       jj_consume_token(WHILE);
 lInicio = pilaSemantica.nuevaEtiqueta();
-            lFin = pilaSemantica.nuevaEtiqueta();
+            lFin    = pilaSemantica.nuevaEtiqueta();
             pilaSemantica.emitirLabel(lInicio);
+            pilaSemantica.entrarBucle(lFin, lInicio);  // break→lFin  continue→lInicio
+
       jj_consume_token(PARENIZQ);
       cond = condicion();
       jj_consume_token(PARENDER);
@@ -869,13 +903,14 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[16] = jj_gen;
+          jj_la1[17] = jj_gen;
           break label_8;
         }
       }
       jj_consume_token(LLAVEDER);
 pilaSemantica.emitirSalto(lInicio);
             pilaSemantica.emitirLabel(lFin);
+            pilaSemantica.salirBucle();
             {if ("" != null) return n;}
     } catch (ParseException e) {
 listaErroresSintacticos.add(manejarErrorSintactico(e));
@@ -886,10 +921,18 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo gramaticaAsignacion() throws ParseException {Token t; Nodo e; Nodo n = new Nodo("Asignacion"); Token op;
+  static final public Nodo gramaticaAsignacion() throws ParseException {Token t; Nodo e; Nodo n = new Nodo("Asignacion"); Token op = null; Nodo idx = null;
     try {
       t = jj_consume_token(IDENTIFICADOR);
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case CORCHIZQ:{
+        jj_consume_token(CORCHIZQ);
+        idx = operacionSimple();
+        jj_consume_token(CORCHDER);
+        jj_consume_token(IGUAL);
+        e = operacionSimple();
+        break;
+        }
       case IGUAL:{
         jj_consume_token(IGUAL);
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -910,7 +953,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
           break;
           }
         default:
-          jj_la1[17] = jj_gen;
+          jj_la1[18] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -938,7 +981,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
           break;
           }
         default:
-          jj_la1[18] = jj_gen;
+          jj_la1[19] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -946,7 +989,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
         break;
         }
       default:
-        jj_la1[19] = jj_gen;
+        jj_la1[20] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -958,12 +1001,24 @@ String tipoDestino = "error";
             } catch (Exception e_sem) {
                 listaErroresSemanticos.add(e_sem.getMessage());
             }
-            n.valor = "Asignacion: " + t.image;
             n.tipo = tipoDestino;
             n.agregarHijo(e);
 
-            // Emitir cuadruplo de asignacion
-            pilaSemantica.emitirAsignacion(e.valor, t.image);
+            if (idx != null) {
+                // ([]=, valor, indice, arreglo)
+                pilaSemantica.emitir("[]=", e.valor, idx.valor, t.image);
+                n.valor = "Asignacion Array: " + t.image;
+            } else if (op != null) {
+                // x op= e  →  T = x op e ; x = T
+                String opStr = op.image.replace("=", "");
+                String temp  = pilaSemantica.nuevaTemporal();
+                pilaSemantica.emitir(opStr, t.image, e.valor, temp);
+                pilaSemantica.emitirAsignacion(temp, t.image);
+                n.valor = "Asignacion: " + t.image;
+            } else {
+                pilaSemantica.emitirAsignacion(e.valor, t.image);
+                n.valor = "Asignacion: " + t.image;
+            }
 
             {if ("" != null) return n;}
     } catch (ParseException e_arg) {
@@ -987,7 +1042,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e_arg));
           break;
           }
         default:
-          jj_la1[20] = jj_gen;
+          jj_la1[21] = jj_gen;
           break label_9;
         }
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1000,7 +1055,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e_arg));
           break;
           }
         default:
-          jj_la1[21] = jj_gen;
+          jj_la1[22] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1039,7 +1094,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
         break;
         }
       default:
-        jj_la1[22] = jj_gen;
+        jj_la1[23] = jj_gen;
         break label_10;
       }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1056,7 +1111,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
         break;
         }
       default:
-        jj_la1[23] = jj_gen;
+        jj_la1[24] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1112,13 +1167,40 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo gramaticaFor() throws ParseException {Nodo n = new Nodo("For"); Nodo cond, hijo;
+// 2.3.4 – for con IR completo (init, condicion, incremento, etiquetas)
+  static final public Nodo gramaticaFor() throws ParseException {Nodo n = new Nodo("For"); Nodo hijo;
+    Token idInit, valInit, idCond, idInc; Token comp, inc; Nodo valCond;
+    String tipoInit, lInicio, lFin, tempCond, tempInc;
     try {
       jj_consume_token(FOR);
       jj_consume_token(PARENIZQ);
-      cond = condicionFor();
+      // -- inicializacion: tipo id = litoral ;
+              tipoInit = tipoDato();
+      idInit = jj_consume_token(IDENTIFICADOR);
+      jj_consume_token(IGUAL);
+      valInit = jj_consume_token(ENTEROS);
+      jj_consume_token(DELIMITADOR);
+try { tablaSimbolos.insertar(idInit.image, tipoInit); }
+            catch(Exception e) { listaErroresSemanticos.add(e.getMessage()); }
+            pilaSemantica.emitirAsignacion(valInit.image, idInit.image);
+            lInicio = pilaSemantica.nuevaEtiqueta();
+            lFin    = pilaSemantica.nuevaEtiqueta();
+            pilaSemantica.emitirLabel(lInicio);
+            pilaSemantica.entrarBucle(lFin, lInicio);
+      // -- condicion: id comp valor ;
+              idCond = jj_consume_token(IDENTIFICADOR);
+      comp = OperadoresComparadores();
+      valCond = valor();
+      jj_consume_token(DELIMITADOR);
+tempCond = pilaSemantica.nuevaTemporal();
+            pilaSemantica.emitir(comp.image, idCond.image, valCond.valor, tempCond);
+            pilaSemantica.emitirSaltoCondicional(tempCond, lFin);
+            n.agregarHijo(new Nodo(tempCond, "bool"));
+      // -- incremento: ++/-- id
+              inc = operadorIncDec();
+      idInc = jj_consume_token(IDENTIFICADOR);
+n.agregarHijo(new Nodo("Paso: " + inc.image + idInc.image));
       jj_consume_token(PARENDER);
-n.agregarHijo(cond);
       jj_consume_token(LLAVEIZQ);
       label_11:
       while (true) {
@@ -1148,43 +1230,23 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[24] = jj_gen;
+          jj_la1[25] = jj_gen;
           break label_11;
         }
       }
       jj_consume_token(LLAVEDER);
-{if ("" != null) return n;}
+String incOp = inc.image.equals("++") ? "+" : "-";
+            tempInc = pilaSemantica.nuevaTemporal();
+            pilaSemantica.emitir(incOp, idInc.image, "1", tempInc);
+            pilaSemantica.emitirAsignacion(tempInc, idInc.image);
+            pilaSemantica.emitirSalto(lInicio);
+            pilaSemantica.emitirLabel(lFin);
+            pilaSemantica.salirBucle();
+            {if ("" != null) return n;}
     } catch (ParseException e) {
 listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
-        {if ("" != null) return null;}
-    }
-    throw new Error("Missing return statement in function");
-}
-
-  static final public Nodo condicionFor() throws ParseException {Token id, id2, val, id3; String tipo; Token comp, inc; Nodo n = new Nodo("Condicion For"); Nodo val2;
-    try {
-      tipo = tipoDato();
-      id = jj_consume_token(IDENTIFICADOR);
-      jj_consume_token(IGUAL);
-      val = jj_consume_token(ENTEROS);
-      jj_consume_token(DELIMITADOR);
-      id2 = jj_consume_token(IDENTIFICADOR);
-      comp = OperadoresComparadores();
-      val2 = valor();
-      jj_consume_token(DELIMITADOR);
-      inc = operadorIncDec();
-      id3 = jj_consume_token(IDENTIFICADOR);
-n.agregarHijo(new Nodo("Inicio: " + id.image + "=" + val.image, tipo));
-            Nodo comparison = new Nodo(comp.image, "comparador");
-            comparison.agregarHijo(new Nodo(id2.image, "id"));
-            comparison.agregarHijo(val2);
-            n.agregarHijo(comparison);
-            n.agregarHijo(new Nodo("Paso: " + inc.image + id3.image));
-            {if ("" != null) return n;}
-    } catch (ParseException e) {
-listaErroresSintacticos.add(manejarErrorSintactico(e));
         {if ("" != null) return null;}
     }
     throw new Error("Missing return statement in function");
@@ -1203,7 +1265,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
       break;
       }
     default:
-      jj_la1[25] = jj_gen;
+      jj_la1[26] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1217,6 +1279,13 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
         jj_consume_token(FUNC);
         tipo = tipoDato();
         id = jj_consume_token(IDENTIFICADOR);
+try {
+                  tablaSimbolos.insertar(id.image, tipo);
+              } catch (Exception e_sem) {
+                  listaErroresSemanticos.add(e_sem.getMessage());
+              }
+              tablaSimbolos.entrarScope();
+              pilaSemantica.emitirLabel("fn_" + id.image);
         jj_consume_token(PARENIZQ);
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
         case IDENTIFICADOR:{
@@ -1224,19 +1293,13 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
           break;
           }
         default:
-          jj_la1[26] = jj_gen;
+          jj_la1[27] = jj_gen;
           ;
         }
         jj_consume_token(PARENDER);
-try {
-                  tablaSimbolos.insertar(id.image, tipo);
-              } catch (Exception e_sem) {
-                  listaErroresSemanticos.add(e_sem.getMessage());
-              }
         jj_consume_token(LLAVEIZQ);
 n = new Nodo("Funcion: " + id.image, tipo);
               if (param != null) n.agregarHijo(param);
-              pilaSemantica.emitirLabel("fn_" + id.image);
         label_12:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1263,7 +1326,7 @@ n = new Nodo("Funcion: " + id.image, tipo);
             break;
             }
           default:
-            jj_la1[27] = jj_gen;
+            jj_la1[28] = jj_gen;
             break label_12;
           }
           hijo = Codigo();
@@ -1279,12 +1342,20 @@ verificarTipo(tipo, ret.tipo, "return");
               retNode.agregarHijo(ret);
               n.agregarHijo(retNode);
               pilaSemantica.emitirReturn(ret.valor);
+              tablaSimbolos.salirScope();
               {if ("" != null) return n;}
         break;
         }
       case VOID:{
         jj_consume_token(VOID);
         id = jj_consume_token(IDENTIFICADOR);
+try {
+                  tablaSimbolos.insertar(id.image, "void");
+              } catch (Exception e_sem) {
+                  listaErroresSemanticos.add(e_sem.getMessage());
+              }
+              tablaSimbolos.entrarScope();
+              pilaSemantica.emitirLabel("fn_" + id.image);
         jj_consume_token(PARENIZQ);
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
         case IDENTIFICADOR:{
@@ -1292,19 +1363,13 @@ verificarTipo(tipo, ret.tipo, "return");
           break;
           }
         default:
-          jj_la1[28] = jj_gen;
+          jj_la1[29] = jj_gen;
           ;
         }
         jj_consume_token(PARENDER);
-try {
-                  tablaSimbolos.insertar(id.image, "void");
-              } catch (Exception e_sem) {
-                  listaErroresSemanticos.add(e_sem.getMessage());
-              }
         jj_consume_token(LLAVEIZQ);
 n = new Nodo("Procedimiento: " + id.image, "void");
               if (param != null) n.agregarHijo(param);
-              pilaSemantica.emitirLabel("fn_" + id.image);
         label_13:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1331,7 +1396,7 @@ n = new Nodo("Procedimiento: " + id.image, "void");
             break;
             }
           default:
-            jj_la1[29] = jj_gen;
+            jj_la1[30] = jj_gen;
             break label_13;
           }
           hijo = Codigo();
@@ -1339,11 +1404,12 @@ n.agregarHijo(hijo);
         }
         jj_consume_token(LLAVEDER);
         jj_consume_token(DELIMITADOR);
-{if ("" != null) return n;}
+tablaSimbolos.salirScope();
+              {if ("" != null) return n;}
         break;
         }
       default:
-        jj_la1[30] = jj_gen;
+        jj_la1[31] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1361,6 +1427,7 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
       id = jj_consume_token(IDENTIFICADOR);
       tipo = tipoDato();
 n.agregarHijo(new Nodo(id.image, tipo));
+            try { tablaSimbolos.insertar(id.image, tipo); } catch(Exception e_p) { listaErroresSemanticos.add(e_p.getMessage()); }
       label_14:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1369,13 +1436,14 @@ n.agregarHijo(new Nodo(id.image, tipo));
           break;
           }
         default:
-          jj_la1[31] = jj_gen;
+          jj_la1[32] = jj_gen;
           break label_14;
         }
         jj_consume_token(COMA);
         id = jj_consume_token(IDENTIFICADOR);
         tipo = tipoDato();
 n.agregarHijo(new Nodo(id.image, tipo));
+            try { tablaSimbolos.insertar(id.image, tipo); } catch(Exception e_p) { listaErroresSemanticos.add(e_p.getMessage()); }
       }
 {if ("" != null) return n;}
     } catch (ParseException e) {
@@ -1403,7 +1471,7 @@ n.valor = "Llamada: " + id.image;
       case PARENIZQ:
       case IDENTIFICADOR:{
         v = valor();
-n.agregarHijo(v); numArgs++;
+n.agregarHijo(v); numArgs++; pilaSemantica.emitir("PARAM", v.valor, "_", "_");
         label_15:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1412,17 +1480,17 @@ n.agregarHijo(v); numArgs++;
             break;
             }
           default:
-            jj_la1[32] = jj_gen;
+            jj_la1[33] = jj_gen;
             break label_15;
           }
           jj_consume_token(COMA);
           v = valor();
-n.agregarHijo(v); numArgs++;
+n.agregarHijo(v); numArgs++; pilaSemantica.emitir("PARAM", v.valor, "_", "_");
         }
         break;
         }
       default:
-        jj_la1[33] = jj_gen;
+        jj_la1[34] = jj_gen;
         ;
       }
       jj_consume_token(PARENDER);
@@ -1462,7 +1530,7 @@ String tipoRet = "error";
       case PARENIZQ:
       case IDENTIFICADOR:{
         v = valor();
-n.agregarHijo(v); numArgs++;
+n.agregarHijo(v); numArgs++; pilaSemantica.emitir("PARAM", v.valor, "_", "_");
         label_16:
         while (true) {
           switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1471,17 +1539,17 @@ n.agregarHijo(v); numArgs++;
             break;
             }
           default:
-            jj_la1[34] = jj_gen;
+            jj_la1[35] = jj_gen;
             break label_16;
           }
           jj_consume_token(COMA);
           v = valor();
-n.agregarHijo(v); numArgs++;
+n.agregarHijo(v); numArgs++; pilaSemantica.emitir("PARAM", v.valor, "_", "_");
         }
         break;
         }
       default:
-        jj_la1[35] = jj_gen;
+        jj_la1[36] = jj_gen;
         ;
       }
       jj_consume_token(PARENDER);
@@ -1497,7 +1565,8 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo gramaticaSwitch() throws ParseException {Nodo n = new Nodo("Switch"); Token t; Nodo hijo;
+// 2.3.4 – switch con IR: comparacion por caso, saltos y etiquetas
+  static final public Nodo gramaticaSwitch() throws ParseException {Nodo n = new Nodo("Switch"); Token t; Nodo hijo; String lFin;
     try {
       jj_consume_token(SWITCH);
       jj_consume_token(PARENIZQ);
@@ -1505,9 +1574,12 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
       jj_consume_token(PARENDER);
       jj_consume_token(LLAVEIZQ);
 n.agregarHijo(new Nodo("Variable: " + t.image, "id"));
+            lFin = pilaSemantica.nuevaEtiqueta();
+            pilaSemantica.entrarBucle(lFin, lFin);  // break sale del switch
+
       label_17:
       while (true) {
-        hijo = gramaticaCase();
+        hijo = gramaticaCase(t.image, lFin);
 n.agregarHijo(hijo);
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
         case CASE:{
@@ -1515,22 +1587,24 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[36] = jj_gen;
+          jj_la1[37] = jj_gen;
           break label_17;
         }
       }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case DEFAULT_TOKEN:{
-        hijo = gramaticaDefault();
+        hijo = gramaticaDefault(lFin);
 n.agregarHijo(hijo);
         break;
         }
       default:
-        jj_la1[37] = jj_gen;
+        jj_la1[38] = jj_gen;
         ;
       }
       jj_consume_token(LLAVEDER);
-{if ("" != null) return n;}
+pilaSemantica.emitirLabel(lFin);
+            pilaSemantica.salirBucle();
+            {if ("" != null) return n;}
     } catch (ParseException e) {
 listaErroresSintacticos.add(manejarErrorSintactico(e));
         skipToNextBreakpoint(LLAVEDER, FIN, EOF);
@@ -1540,47 +1614,29 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo gramaticaCase() throws ParseException {Nodo n = new Nodo("Case"); Nodo v; Nodo hijo;
+  static final public Nodo gramaticaCase(String varSwitch, String lFin) throws ParseException {Nodo n = new Nodo("Case"); Nodo v; Nodo hijo;
+    String lSiguiente, tempCase;
     jj_consume_token(CASE);
     v = valor();
     jj_consume_token(DOS_PUNTOS);
+lSiguiente = pilaSemantica.nuevaEtiqueta();
+        tempCase   = pilaSemantica.nuevaTemporal();
+        // Si var != caseVal  →  salta al siguiente case
+        pilaSemantica.emitir("==", varSwitch, v.valor, tempCase);
+        pilaSemantica.emitirSaltoCondicional(tempCase, lSiguiente);
     label_18:
-    while (true) {
-      hijo = Codigo();
-n.agregarHijo(hijo);
-      if (jj_2_8(2)) {
-        ;
-      } else {
-        break label_18;
-      }
-    }
-    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-    case BREAK:{
-      jj_consume_token(BREAK);
-      jj_consume_token(DELIMITADOR);
-      break;
-      }
-    default:
-      jj_la1[38] = jj_gen;
-      ;
-    }
-{if ("" != null) return n;}
-    throw new Error("Missing return statement in function");
-}
-
-  static final public Nodo gramaticaDefault() throws ParseException {Nodo n = new Nodo("Default"); Nodo hijo;
-    jj_consume_token(DEFAULT_TOKEN);
-    jj_consume_token(DOS_PUNTOS);
-    label_19:
     while (true) {
       hijo = Codigo();
 n.agregarHijo(hijo);
       if (jj_2_9(2)) {
         ;
       } else {
-        break label_19;
+        break label_18;
       }
     }
+pilaSemantica.emitirSalto(lFin);       // sale del switch al terminar el cuerpo
+        pilaSemantica.emitirLabel(lSiguiente); // entrada del siguiente case
+
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case BREAK:{
       jj_consume_token(BREAK);
@@ -1589,6 +1645,34 @@ n.agregarHijo(hijo);
       }
     default:
       jj_la1[39] = jj_gen;
+      ;
+    }
+{if ("" != null) return n;}
+    throw new Error("Missing return statement in function");
+}
+
+  static final public Nodo gramaticaDefault(String lFin) throws ParseException {Nodo n = new Nodo("Default"); Nodo hijo;
+    jj_consume_token(DEFAULT_TOKEN);
+    jj_consume_token(DOS_PUNTOS);
+    label_19:
+    while (true) {
+      hijo = Codigo();
+n.agregarHijo(hijo);
+      if (jj_2_10(2)) {
+        ;
+      } else {
+        break label_19;
+      }
+    }
+pilaSemantica.emitirSalto(lFin);
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case BREAK:{
+      jj_consume_token(BREAK);
+      jj_consume_token(DELIMITADOR);
+      break;
+      }
+    default:
+      jj_la1[40] = jj_gen;
       ;
     }
 {if ("" != null) return n;}
@@ -1627,7 +1711,7 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[40] = jj_gen;
+          jj_la1[41] = jj_gen;
           break label_20;
         }
       }
@@ -1671,7 +1755,7 @@ n.agregarHijo(hijo);
             break;
             }
           default:
-            jj_la1[41] = jj_gen;
+            jj_la1[42] = jj_gen;
             break label_22;
           }
         }
@@ -1682,7 +1766,7 @@ n.agregarHijo(hijo);
           break;
           }
         default:
-          jj_la1[42] = jj_gen;
+          jj_la1[43] = jj_gen;
           break label_21;
         }
       }
@@ -1719,7 +1803,7 @@ n.agregarHijo(hijo);
             break;
             }
           default:
-            jj_la1[43] = jj_gen;
+            jj_la1[44] = jj_gen;
             break label_23;
           }
         }
@@ -1727,7 +1811,7 @@ n.agregarHijo(hijo);
         break;
         }
       default:
-        jj_la1[44] = jj_gen;
+        jj_la1[45] = jj_gen;
         ;
       }
 {if ("" != null) return n;}
@@ -1756,11 +1840,11 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
           }
         case IGUAL:{
           jj_consume_token(IGUAL);
-          init = inicializarArreglo();
+          init = inicializarArreglo(t.image, 0);
           break;
           }
         default:
-          jj_la1[45] = jj_gen;
+          jj_la1[46] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1783,11 +1867,11 @@ n = new Nodo("Vector: " + t.image, tipo); if(init != null) n.agregarHijo(init);
           }
         case IGUAL:{
           jj_consume_token(IGUAL);
-          init = inicializarMatriz();
+          init = inicializarMatriz(t.image);
           break;
           }
         default:
-          jj_la1[46] = jj_gen;
+          jj_la1[47] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1795,7 +1879,7 @@ n = new Nodo("Matriz: " + t.image, tipo); if(init != null) n.agregarHijo(init);
         break;
         }
       default:
-        jj_la1[47] = jj_gen;
+        jj_la1[48] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1812,10 +1896,11 @@ listaErroresSintacticos.add(manejarErrorSintactico(e));
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo inicializarArreglo() throws ParseException {Nodo n = new Nodo("Inicializacion Arreglo"); Nodo v;
+// 2.3.6 – inicializacion de arreglo con cuadruplos ([]=, val, idx, nombre)
+  static final public Nodo inicializarArreglo(String arrayName, int startIdx) throws ParseException {Nodo n = new Nodo("Inicializacion Arreglo"); Nodo v; int idx = startIdx;
     jj_consume_token(CORCHIZQ);
     v = valor();
-n.agregarHijo(v);
+n.agregarHijo(v); pilaSemantica.emitir("[]=", v.valor, String.valueOf(idx++), arrayName);
     label_24:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1824,22 +1909,23 @@ n.agregarHijo(v);
         break;
         }
       default:
-        jj_la1[48] = jj_gen;
+        jj_la1[49] = jj_gen;
         break label_24;
       }
       jj_consume_token(COMA);
       v = valor();
-n.agregarHijo(v);
+n.agregarHijo(v); pilaSemantica.emitir("[]=", v.valor, String.valueOf(idx++), arrayName);
     }
     jj_consume_token(CORCHDER);
 {if ("" != null) return n;}
     throw new Error("Missing return statement in function");
 }
 
-  static final public Nodo inicializarMatriz() throws ParseException {Nodo n = new Nodo("Inicializacion Matriz"); Nodo v;
+// 2.3.6 – inicializacion de matriz con indice plano por fila
+  static final public Nodo inicializarMatriz(String arrayName) throws ParseException {Nodo n = new Nodo("Inicializacion Matriz"); Nodo fila; int flatIdx = 0;
     jj_consume_token(CORCHIZQ);
-    v = inicializarArreglo();
-n.agregarHijo(v);
+    fila = inicializarArreglo(arrayName, flatIdx);
+n.agregarHijo(fila); flatIdx += fila.hijos.size();
     label_25:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -1848,12 +1934,12 @@ n.agregarHijo(v);
         break;
         }
       default:
-        jj_la1[49] = jj_gen;
+        jj_la1[50] = jj_gen;
         break label_25;
       }
       jj_consume_token(COMA);
-      v = inicializarArreglo();
-n.agregarHijo(v);
+      fila = inicializarArreglo(arrayName, flatIdx);
+n.agregarHijo(fila); flatIdx += fila.hijos.size();
     }
     jj_consume_token(CORCHDER);
 {if ("" != null) return n;}
@@ -1932,37 +2018,26 @@ n.agregarHijo(v);
     finally { jj_save(8, xla); }
   }
 
-  static private boolean jj_3R_gramaticaTryCatch_942_5_32()
+  static private boolean jj_2_10(int xla)
  {
-    if (jj_scan_token(TRY)) return true;
-    if (jj_scan_token(LLAVEIZQ)) return true;
-    return false;
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return (!jj_3_10()); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(9, xla); }
   }
 
-  static private boolean jj_3R_Codigo_359_15_45()
- {
-    if (jj_scan_token(SINO)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_Codigo_358_15_44()
+  static private boolean jj_3R_Codigo_362_15_45()
  {
     if (jj_scan_token(BREAK)) return true;
     if (jj_scan_token(DELIMITADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaFor_747_5_30()
+  static private boolean jj_3R_llamarFuncion_941_5_29()
  {
-    if (jj_scan_token(FOR)) return true;
+    if (jj_scan_token(FUNC)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_Codigo_357_15_43()
- {
-    if (jj_scan_token(CONTINUE)) return true;
-    if (jj_scan_token(DELIMITADOR)) return true;
     return false;
   }
 
@@ -1972,91 +2047,295 @@ n.agregarHijo(v);
     return false;
   }
 
+  static private boolean jj_3R_Codigo_357_15_44()
+ {
+    if (jj_scan_token(CONTINUE)) return true;
+    if (jj_scan_token(DELIMITADOR)) return true;
+    return false;
+  }
+
   static private boolean jj_3_7()
  {
-    if (jj_3R_gramaticaTryCatch_942_5_32()) return true;
+    if (jj_3R_gramaticaTryCatch_1053_5_32()) return true;
     return false;
   }
 
   static private boolean jj_3_6()
  {
-    if (jj_3R_gramaticaSwitch_905_5_31()) return true;
+    if (jj_3R_gramaticaSwitch_993_5_31()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_354_15_42()
+  static private boolean jj_3R_Codigo_354_15_43()
  {
-    if (jj_3R_SentenciasFunciones_788_5_54()) return true;
+    if (jj_3R_SentenciasFunciones_852_5_55()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_353_15_41()
+  static private boolean jj_3R_Codigo_353_15_42()
  {
-    if (jj_3R_gramaticaOperadorLogico_713_5_53()) return true;
+    if (jj_3R_gramaticaOperadorLogico_762_5_54()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_455_7_64()
+ {
+    if (jj_scan_token(STRING)) return true;
     return false;
   }
 
   static private boolean jj_3_5()
  {
-    if (jj_3R_gramaticaFor_747_5_30()) return true;
+    if (jj_3R_gramaticaFor_801_5_30()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_454_7_63()
+ {
+    if (jj_scan_token(BOOL)) return true;
     return false;
   }
 
   static private boolean jj_3_4()
  {
-    if (jj_3R_llamarFuncion_858_5_29()) return true;
+    if (jj_3R_llamarFuncion_941_5_29()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_453_7_62()
+ {
+    if (jj_scan_token(FLOAT)) return true;
     return false;
   }
 
   static private boolean jj_3_3()
  {
-    if (jj_3R_gramaticaAsignacion_628_5_28()) return true;
+    if (jj_3R_gramaticaAsignacion_660_5_28()) return true;
     return false;
   }
 
   static private boolean jj_3_2()
  {
-    if (jj_3R_gramaticaWhile_600_5_27()) return true;
+    if (jj_3R_gramaticaWhile_630_5_27()) return true;
     return false;
   }
 
   static private boolean jj_3_1()
  {
-    if (jj_3R_gramaticaSi_506_5_26()) return true;
+    if (jj_3R_gramaticaSi_536_5_26()) return true;
     return false;
   }
 
-  static private boolean jj_3_8()
+  static private boolean jj_3R_tipoDato_452_5_61()
  {
-    if (jj_3R_Codigo_341_5_33()) return true;
+    if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_347_15_40()
+  static private boolean jj_3R_tipoDato_452_5_60()
  {
-    if (jj_3R_gramaticaLeer_489_5_52()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_tipoDato_452_5_61()) {
+    jj_scanpos = xsp;
+    if (jj_3R_tipoDato_453_7_62()) {
+    jj_scanpos = xsp;
+    if (jj_3R_tipoDato_454_7_63()) {
+    jj_scanpos = xsp;
+    if (jj_3R_tipoDato_455_7_64()) return true;
+    }
+    }
+    }
     return false;
   }
 
-  static private boolean jj_3R_Codigo_346_15_39()
+  static private boolean jj_3R_Codigo_347_15_41()
  {
-    if (jj_3R_gramaticaEscribir_471_5_51()) return true;
+    if (jj_3R_gramaticaLeer_519_5_53()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_345_15_38()
+  static private boolean jj_3R_Codigo_346_15_40()
  {
-    if (jj_3R_declararConstante_414_5_50()) return true;
+    if (jj_3R_gramaticaEscribir_501_5_52()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_344_15_37()
+  static private boolean jj_3R_Codigo_345_15_39()
  {
-    if (jj_3R_declararArreglo_969_5_49()) return true;
+    if (jj_3R_declararConstante_425_5_51()) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_633_11_35()
+  static private boolean jj_3R_Codigo_344_15_38()
+ {
+    if (jj_3R_declararArreglo_1080_5_50()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_Codigo_343_15_37()
+ {
+    if (jj_3R_declararVariable_401_5_49()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaSi_536_5_26()
+ {
+    if (jj_scan_token(SI)) return true;
+    if (jj_scan_token(PARENIZQ)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaWhile_630_5_27()
+ {
+    if (jj_scan_token(WHILE)) return true;
+    if (jj_scan_token(PARENIZQ)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_Codigo_341_5_33()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_Codigo_343_15_37()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_344_15_38()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_345_15_39()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_346_15_40()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_347_15_41()) {
+    jj_scanpos = xsp;
+    if (jj_3_1()) {
+    jj_scanpos = xsp;
+    if (jj_3_2()) {
+    jj_scanpos = xsp;
+    if (jj_3_3()) {
+    jj_scanpos = xsp;
+    if (jj_3_4()) {
+    jj_scanpos = xsp;
+    if (jj_3_5()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_353_15_42()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_354_15_43()) {
+    jj_scanpos = xsp;
+    if (jj_3_6()) {
+    jj_scanpos = xsp;
+    if (jj_3_7()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_357_15_44()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_362_15_45()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_367_15_46()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_374_15_47()) {
+    jj_scanpos = xsp;
+    if (jj_3R_Codigo_381_15_48()) return true;
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_declararArreglo_1090_13_57()
+ {
+    if (jj_scan_token(MATRIZ)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_declararArreglo_1082_13_56()
+ {
+    if (jj_scan_token(VECTOR)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_declararConstante_425_5_51()
+ {
+    if (jj_scan_token(CONST)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaLeer_519_5_53()
+ {
+    if (jj_scan_token(LEER)) return true;
+    if (jj_scan_token(PARENIZQ)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaSwitch_993_5_31()
+ {
+    if (jj_scan_token(SWITCH)) return true;
+    if (jj_scan_token(PARENIZQ)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaFor_801_5_30()
+ {
+    if (jj_scan_token(FOR)) return true;
+    if (jj_scan_token(PARENIZQ)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_declararArreglo_1080_5_50()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_declararArreglo_1082_13_56()) {
+    jj_scanpos = xsp;
+    if (jj_3R_declararArreglo_1090_13_57()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_SentenciasFunciones_884_9_59()
+ {
+    if (jj_scan_token(VOID)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaEscribir_501_5_52()
+ {
+    if (jj_scan_token(ESCRIBIR)) return true;
+    if (jj_scan_token(PARENIZQ)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_declararVariable_401_5_49()
+ {
+    if (jj_scan_token(VAR)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_Codigo_381_15_48()
+ {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaAsignacion_670_11_36()
  {
     Token xsp;
     xsp = jj_scanpos;
@@ -2073,256 +2352,87 @@ n.agregarHijo(v);
     return false;
   }
 
-  static private boolean jj_3R_Codigo_343_15_36()
- {
-    if (jj_3R_declararVariable_393_5_48()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_gramaticaAsignacion_631_11_34()
+  static private boolean jj_3R_gramaticaAsignacion_667_11_35()
  {
     if (jj_scan_token(IGUAL)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_442_7_63()
+  static private boolean jj_3R_gramaticaTryCatch_1053_5_32()
  {
-    if (jj_scan_token(STRING)) return true;
+    if (jj_scan_token(TRY)) return true;
+    if (jj_scan_token(LLAVEIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_441_7_62()
- {
-    if (jj_scan_token(BOOL)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_tipoDato_440_7_61()
- {
-    if (jj_scan_token(FLOAT)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_SentenciasFunciones_816_9_58()
- {
-    if (jj_scan_token(VOID)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_tipoDato_439_5_60()
- {
-    if (jj_scan_token(INT)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_tipoDato_439_5_59()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_tipoDato_439_5_60()) {
-    jj_scanpos = xsp;
-    if (jj_3R_tipoDato_440_7_61()) {
-    jj_scanpos = xsp;
-    if (jj_3R_tipoDato_441_7_62()) {
-    jj_scanpos = xsp;
-    if (jj_3R_tipoDato_442_7_63()) return true;
-    }
-    }
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_gramaticaAsignacion_628_5_28()
+  static private boolean jj_3_8()
  {
     if (jj_scan_token(IDENTIFICADOR)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_gramaticaAsignacion_631_11_34()) {
-    jj_scanpos = xsp;
-    if (jj_3R_gramaticaAsignacion_633_11_35()) return true;
-    }
+    if (jj_scan_token(CORCHIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_341_5_33()
+  static private boolean jj_3R_gramaticaAsignacion_664_11_34()
  {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_Codigo_343_15_36()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_344_15_37()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_345_15_38()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_346_15_39()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_347_15_40()) {
-    jj_scanpos = xsp;
-    if (jj_3_1()) {
-    jj_scanpos = xsp;
-    if (jj_3_2()) {
-    jj_scanpos = xsp;
-    if (jj_3_3()) {
-    jj_scanpos = xsp;
-    if (jj_3_4()) {
-    jj_scanpos = xsp;
-    if (jj_3_5()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_353_15_41()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_354_15_42()) {
-    jj_scanpos = xsp;
-    if (jj_3_6()) {
-    jj_scanpos = xsp;
-    if (jj_3_7()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_357_15_43()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_358_15_44()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_359_15_45()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_366_15_46()) {
-    jj_scanpos = xsp;
-    if (jj_3R_Codigo_373_15_47()) return true;
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
-    }
+    if (jj_scan_token(CORCHIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaSwitch_905_5_31()
- {
-    if (jj_scan_token(SWITCH)) return true;
-    if (jj_scan_token(PARENIZQ)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_gramaticaOperadorLogico_713_5_53()
- {
-    if (jj_scan_token(BOOL)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_declararArreglo_979_13_56()
- {
-    if (jj_scan_token(MATRIZ)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_declararConstante_414_5_50()
- {
-    if (jj_scan_token(CONST)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_SentenciasFunciones_789_9_57()
- {
-    if (jj_scan_token(FUNC)) return true;
-    if (jj_3R_tipoDato_439_5_59()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_gramaticaSi_506_5_26()
- {
-    if (jj_scan_token(SI)) return true;
-    if (jj_scan_token(PARENIZQ)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_gramaticaWhile_600_5_27()
- {
-    if (jj_scan_token(WHILE)) return true;
-    if (jj_scan_token(PARENIZQ)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_declararArreglo_971_13_55()
- {
-    if (jj_scan_token(VECTOR)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_SentenciasFunciones_788_5_54()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_SentenciasFunciones_789_9_57()) {
-    jj_scanpos = xsp;
-    if (jj_3R_SentenciasFunciones_816_9_58()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_declararArreglo_969_5_49()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_declararArreglo_971_13_55()) {
-    jj_scanpos = xsp;
-    if (jj_3R_declararArreglo_979_13_56()) return true;
-    }
-    return false;
-  }
-
-  static private boolean jj_3R_gramaticaLeer_489_5_52()
- {
-    if (jj_scan_token(LEER)) return true;
-    if (jj_scan_token(PARENIZQ)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_declararVariable_393_5_48()
- {
-    if (jj_scan_token(VAR)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_Codigo_373_15_47()
- {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_llamarFuncion_858_5_29()
- {
-    if (jj_scan_token(FUNC)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    if (jj_scan_token(PARENIZQ)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_Codigo_366_15_46()
+  static private boolean jj_3R_Codigo_374_15_47()
  {
     if (jj_scan_token(CATCH)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaEscribir_471_5_51()
+  static private boolean jj_3R_SentenciasFunciones_853_9_58()
  {
-    if (jj_scan_token(ESCRIBIR)) return true;
-    if (jj_scan_token(PARENIZQ)) return true;
+    if (jj_scan_token(FUNC)) return true;
+    if (jj_3R_tipoDato_452_5_60()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaOperadorLogico_762_5_54()
+ {
+    if (jj_scan_token(BOOL)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_10()
+ {
+    if (jj_3R_Codigo_341_5_33()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_SentenciasFunciones_852_5_55()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_SentenciasFunciones_853_9_58()) {
+    jj_scanpos = xsp;
+    if (jj_3R_SentenciasFunciones_884_9_59()) return true;
+    }
+    return false;
+  }
+
+  static private boolean jj_3R_Codigo_367_15_46()
+ {
+    if (jj_scan_token(SINO)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_gramaticaAsignacion_660_5_28()
+ {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_gramaticaAsignacion_664_11_34()) {
+    jj_scanpos = xsp;
+    if (jj_3R_gramaticaAsignacion_667_11_35()) {
+    jj_scanpos = xsp;
+    if (jj_3R_gramaticaAsignacion_670_11_36()) return true;
+    }
+    }
     return false;
   }
 
@@ -2338,7 +2448,7 @@ n.agregarHijo(v);
   static private Token jj_scanpos, jj_lastpos;
   static private int jj_la;
   static private int jj_gen;
-  static final private int[] jj_la1 = new int[50];
+  static final private int[] jj_la1 = new int[51];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static private int[] jj_la1_2;
@@ -2348,15 +2458,15 @@ n.agregarHijo(v);
 	   jj_la1_init_2();
 	}
 	private static void jj_la1_init_0() {
-	   jj_la1_0 = new int[] {0x68f3f80,0x6000600,0x800000,0xb1000,0x1e00000,0x0,0x0,0x0,0x0,0x0,0x68f3f80,0x1000,0x68f3f80,0x0,0x0,0x0,0x68f3f80,0x0,0x0,0x0,0x18000000,0x18000000,0xe0000000,0xe0000000,0x68f3f80,0x0,0x0,0x68f3f80,0x0,0x68f3f80,0x0,0x0,0x0,0x0,0x0,0x0,0x4000,0x8000,0x10000,0x10000,0x68f3f80,0x68f3f80,0x80000,0x68f3f80,0x100000,0x0,0x0,0x600,0x0,0x0,};
+	   jj_la1_0 = new int[] {0x68f3f80,0x6000600,0x800000,0xb1000,0x1e00000,0x0,0x0,0x0,0x0,0x0,0x0,0x68f3f80,0x1000,0x68f3f80,0x0,0x0,0x0,0x68f3f80,0x0,0x0,0x0,0x18000000,0x18000000,0xe0000000,0xe0000000,0x68f3f80,0x0,0x0,0x68f3f80,0x0,0x68f3f80,0x0,0x0,0x0,0x0,0x0,0x0,0x4000,0x8000,0x10000,0x10000,0x68f3f80,0x68f3f80,0x80000,0x68f3f80,0x100000,0x0,0x0,0x600,0x0,0x0,};
 	}
 	private static void jj_la1_init_1() {
-	   jj_la1_1 = new int[] {0x81800000,0x1800000,0x0,0x0,0x0,0x7f0000,0x80000,0x0,0x80000,0x80000,0x1800000,0x0,0x1800000,0x1c,0x1c,0xfa0,0x1800000,0x7f0000,0xf000,0xf040,0x0,0x0,0x0,0x0,0x1800000,0x3,0x0,0x1800000,0x0,0x1800000,0x0,0x8000000,0x8000000,0x7f0000,0x8000000,0x7f0000,0x0,0x0,0x0,0x0,0x1800000,0x1800000,0x0,0x1800000,0x0,0x10000040,0x10000040,0x0,0x8000000,0x8000000,};
+	   jj_la1_1 = new int[] {0x81800000,0x1800000,0x0,0x0,0x0,0x7f0000,0x0,0x80000,0x0,0x80000,0x80000,0x1800000,0x0,0x1800000,0x1c,0x1c,0xfa0,0x1800000,0x7f0000,0xf000,0x1000f040,0x0,0x0,0x0,0x0,0x1800000,0x3,0x0,0x1800000,0x0,0x1800000,0x0,0x8000000,0x8000000,0x7f0000,0x8000000,0x7f0000,0x0,0x0,0x0,0x0,0x1800000,0x1800000,0x0,0x1800000,0x0,0x10000040,0x10000040,0x0,0x8000000,0x8000000,};
 	}
 	private static void jj_la1_init_2() {
-	   jj_la1_2 = new int[] {0x310,0x0,0x110,0x200,0x0,0x201,0x200,0x4,0x200,0x200,0x310,0x0,0x310,0x0,0x0,0x0,0x310,0x301,0x0,0x0,0x0,0x0,0x0,0x0,0x310,0x0,0x200,0x310,0x200,0x310,0x110,0x0,0x0,0x201,0x0,0x201,0x0,0x0,0x0,0x0,0x310,0x310,0x0,0x310,0x0,0x0,0x0,0x0,0x0,0x0,};
+	   jj_la1_2 = new int[] {0x310,0x0,0x110,0x200,0x0,0x1,0x200,0x200,0x4,0x200,0x200,0x310,0x0,0x310,0x0,0x0,0x0,0x310,0x301,0x0,0x0,0x0,0x0,0x0,0x0,0x310,0x0,0x200,0x310,0x200,0x310,0x110,0x0,0x0,0x201,0x0,0x201,0x0,0x0,0x0,0x0,0x310,0x310,0x0,0x310,0x0,0x0,0x0,0x0,0x0,0x0,};
 	}
-  static final private JJCalls[] jj_2_rtns = new JJCalls[9];
+  static final private JJCalls[] jj_2_rtns = new JJCalls[10];
   static private boolean jj_rescan = false;
   static private int jj_gc = 0;
 
@@ -2378,7 +2488,7 @@ n.agregarHijo(v);
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 51; i++) jj_la1[i] = -1;
 	 for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -2393,7 +2503,7 @@ n.agregarHijo(v);
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 51; i++) jj_la1[i] = -1;
 	 for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -2411,7 +2521,7 @@ n.agregarHijo(v);
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 51; i++) jj_la1[i] = -1;
 	 for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -2430,7 +2540,7 @@ n.agregarHijo(v);
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 51; i++) jj_la1[i] = -1;
 	 for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -2447,7 +2557,7 @@ n.agregarHijo(v);
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 51; i++) jj_la1[i] = -1;
 	 for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -2457,7 +2567,7 @@ n.agregarHijo(v);
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 50; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 51; i++) jj_la1[i] = -1;
 	 for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -2593,7 +2703,7 @@ n.agregarHijo(v);
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
 	 }
-	 for (int i = 0; i < 50; i++) {
+	 for (int i = 0; i < 51; i++) {
 	   if (jj_la1[i] == jj_gen) {
 		 for (int j = 0; j < 32; j++) {
 		   if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -2642,7 +2752,7 @@ n.agregarHijo(v);
 
   static private void jj_rescan_token() {
 	 jj_rescan = true;
-	 for (int i = 0; i < 9; i++) {
+	 for (int i = 0; i < 10; i++) {
 	   try {
 		 JJCalls p = jj_2_rtns[i];
 
@@ -2659,6 +2769,7 @@ n.agregarHijo(v);
 			   case 6: jj_3_7(); break;
 			   case 7: jj_3_8(); break;
 			   case 8: jj_3_9(); break;
+			   case 9: jj_3_10(); break;
 			 }
 		   }
 		   p = p.next;

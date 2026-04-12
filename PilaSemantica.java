@@ -62,6 +62,11 @@ public class PilaSemantica {
         return nodoTemp;
     }
 
+    /** Genera solo el nombre del temporal sin hacer push ni emitir cuadruplo */
+    public String nuevaTemporal() {
+        return "T" + (contadorTemporales++);
+    }
+
     // ----------------------------------------------------------------
     // GENERACION DE ETIQUETAS
     // ----------------------------------------------------------------
@@ -121,6 +126,34 @@ public class PilaSemantica {
     }
 
     // ----------------------------------------------------------------
+    // GESTION DE BUCLES (break / continue)
+    // ----------------------------------------------------------------
+    private Stack<String> pilaBreak    = new Stack<>();
+    private Stack<String> pilaContinue = new Stack<>();
+
+    /** Registra las etiquetas de salida del bucle actual */
+    public void entrarBucle(String labelBreak, String labelContinue) {
+        pilaBreak.push(labelBreak);
+        pilaContinue.push(labelContinue);
+    }
+
+    /** Descarta las etiquetas del bucle que acaba de cerrarse */
+    public void salirBucle() {
+        if (!pilaBreak.isEmpty())    pilaBreak.pop();
+        if (!pilaContinue.isEmpty()) pilaContinue.pop();
+    }
+
+    /** Etiqueta destino para el break del bucle mas interno */
+    public String getLabelBreak() {
+        return pilaBreak.isEmpty() ? "_" : pilaBreak.peek();
+    }
+
+    /** Etiqueta destino para el continue del bucle mas interno */
+    public String getLabelContinue() {
+        return pilaContinue.isEmpty() ? "_" : pilaContinue.peek();
+    }
+
+    // ----------------------------------------------------------------
     // ACCESORES Y LIMPIEZA
     // ----------------------------------------------------------------
 
@@ -133,6 +166,8 @@ public class PilaSemantica {
         contadorTemporales = 1;
         contadorEtiquetas = 1;
         cuadruplos.clear();
+        pilaBreak.clear();
+        pilaContinue.clear();
     }
 
     // Método para imprimir el contenido de la pila indicando el orden (Base a Tope)

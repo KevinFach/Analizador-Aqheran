@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java -cp javacc.jar javacc AnalizadorAqheran.jj)",
+      "Bash(javac *.java)",
+      "Bash(java AnalizadorAqheran --aqheran prueba_ci.txt)",
+      "Bash(java AnalizadorAqheran --aqheran prueba_nuevos.txt)"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+start TestNuevos {
+    @ x int;
+    # MAX int = 100;
+    vec arr int = [10, 20, 30];
+    matrix mat int = [[1, 2], [3, 4]];
+
+    fn int suma(a int, b int) {
+        @ res int;
+        res = a + b;
+        return res;
+    };
+
+    void imprimir(msg string) {
+        aqhe(msg);
+    };
+
+    x = 5;
+    x += 3;
+    x *= 2;
+
+    for (int i = 0; i < 3; ++i) {
+        aqhe(arr[i]);
+    }
+
+    switch (x) {
+        case 16: aqhe("x es 16"); break;
+        case 20: aqhe("x es 20"); break;
+        default: aqhe("otro valor");
+    }
+}
+end
