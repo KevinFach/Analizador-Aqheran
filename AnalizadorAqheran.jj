@@ -70,6 +70,12 @@ public class AnalizadorAqheran {
                     for (Cuadruplo c : cuadruplos) System.out.println(c);
                     System.out.println("--------------------------------------------");
                 }
+                
+                if (verbose) {
+                    System.out.println("\n--- NOTACION POSTFIJA (AST EN POSTORDEN) ---");
+                    raiz.imprimirPostfijo();
+                    System.out.println("\n--------------------------------------------");
+                }
             }
             
         } catch (Exception e) {

@@ -47,7 +47,7 @@ public class PilaSemantica {
         return nodoTemp;
     }
 
-    /**
+    /** es
      * Genera un nodo temporal Y emite el cuadruplo correspondiente.
      * Usar este metodo en operaciones aritmeticas para producir IR.
      *
