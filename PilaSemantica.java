@@ -47,7 +47,7 @@ public class PilaSemantica {
         return nodoTemp;
     }
 
-    /**
+    /** es
      * Genera un nodo temporal Y emite el cuadruplo correspondiente.
      * Usar este metodo en operaciones aritmeticas para producir IR.
      *
@@ -123,6 +123,16 @@ public class PilaSemantica {
     /** Retorno: (RET, valor, _, _) */
     public void emitirReturn(String valor) {
         cuadruplos.add(new Cuadruplo("RET", valor, "_", "_"));
+    }
+
+    /** Inicio de bloque try: (TRY_BEGIN, _, _, L_catch) */
+    public void emitirTryBegin(String lCatch) {
+        cuadruplos.add(new Cuadruplo("TRY_BEGIN", "_", "_", lCatch));
+    }
+
+    /** Fin de bloque try: (TRY_END, _, _, L_finally) */
+    public void emitirTryEnd(String lFinally) {
+        cuadruplos.add(new Cuadruplo("TRY_END", "_", "_", lFinally));
     }
 
     // ----------------------------------------------------------------

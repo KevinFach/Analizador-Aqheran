@@ -76,6 +76,12 @@ public class AnalizadorAqheran {
                     // Tabla comparativa
                     OptimizadorCI.imprimirComparacion(resOpt);
                 }
+                
+                if (verbose) {
+                    System.out.println("\n--- NOTACION POSTFIJA (AST EN POSTORDEN) ---");
+                    raiz.imprimirPostfijo();
+                    System.out.println("\n--------------------------------------------");
+                }
             }
             
         } catch (Exception e) {
@@ -1054,21 +1060,30 @@ Nodo gramaticaDefault(String lFin) : { Nodo n = new Nodo("Default"); Nodo hijo; 
     { return n; }
 }
 
-Nodo gramaticaTryCatch() : { Nodo n = new Nodo("Try-Catch"); Nodo hijo; Token exTipo, exNom; }
+Nodo gramaticaTryCatch() : {
+    Nodo n = new Nodo("Try-Catch"); Nodo hijo;
+    String lPrimerCatch, lFinally;
+}
 {
     try {
-        <TRY> <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
-        (
-            <CATCH> <PARENIZQ> exTipo = <IDENTIFICADOR> exNom = <IDENTIFICADOR> <PARENDER> <LLAVEIZQ>
-            { 
-               Nodo c = new Nodo("Catch"); 
-               c.agregarHijo(new Nodo("Excepcion: " + exTipo.image + " " + exNom.image));
-               n.agregarHijo(c);
-            }
-            (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
-        )+
+        <TRY>
+        {
+            lPrimerCatch = pilaSemantica.nuevaEtiqueta();
+            lFinally     = pilaSemantica.nuevaEtiqueta();
+            pilaSemantica.emitirTryBegin(lPrimerCatch);
+        }
+        <LLAVEIZQ> (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
+        {
+            pilaSemantica.emitirTryEnd(lFinally);
+            pilaSemantica.emitirLabel(lPrimerCatch);
+        }
+        gramaticaCatchClause(n, lFinally)
+        ( LOOKAHEAD(<CATCH>) gramaticaCatchClause(n, lFinally) )*
+        {
+            pilaSemantica.emitirLabel(lFinally);
+        }
         [
-            <FINALLY> <LLAVEIZQ> 
+            <FINALLY> <LLAVEIZQ>
             { Nodo f = new Nodo("Finally"); n.agregarHijo(f); }
             (hijo = Codigo() { n.agregarHijo(hijo); })+ <LLAVEDER>
         ]
@@ -1078,6 +1093,27 @@ Nodo gramaticaTryCatch() : { Nodo n = new Nodo("Try-Catch"); Nodo hijo; Token ex
         skipToNextBreakpoint(LLAVEDER, FIN, EOF);
         if (getToken(1).kind == LLAVEDER) getNextToken();
         return null;
+    }
+}
+
+void gramaticaCatchClause(Nodo parent, String lFinally) : {
+    Token exTipo, exNom; Nodo hijo; String lSiguiente;
+}
+{
+    <CATCH> <PARENIZQ> exTipo = <IDENTIFICADOR> exNom = <IDENTIFICADOR> <PARENDER>
+    {
+        pilaSemantica.emitirAsignacion(exTipo.image, exNom.image);
+        try { tablaSimbolos.insertar(exNom.image, exTipo.image); }
+        catch (Exception e_sem) { listaErroresSemanticos.add(e_sem.getMessage()); }
+        Nodo c = new Nodo("Catch: " + exTipo.image + " " + exNom.image);
+        c.agregarHijo(new Nodo("Excepcion: " + exTipo.image + " " + exNom.image));
+        parent.agregarHijo(c);
+    }
+    <LLAVEIZQ> (hijo = Codigo() { parent.agregarHijo(hijo); })+ <LLAVEDER>
+    {
+        pilaSemantica.emitirSalto(lFinally);
+        lSiguiente = pilaSemantica.nuevaEtiqueta();
+        pilaSemantica.emitirLabel(lSiguiente);
     }
 }
 
