@@ -4,7 +4,10 @@
       "Bash(java -cp javacc.jar javacc AnalizadorAqheran.jj)",
       "Bash(javac *.java)",
       "Bash(java AnalizadorAqheran --aqheran prueba_ci.txt)",
-      "Bash(java AnalizadorAqheran --aqheran prueba_nuevos.txt)"
+      "Bash(java AnalizadorAqheran --aqheran prueba_nuevos.txt)",
+      "Bash(java -jar javacc.jar AnalizadorAqheran.jj)",
+      "Bash(java AnalizadorAqheran --aqheran prueba_optimizacion.txt)",
+      "Bash(Select-String -Pattern \"OPTIMIZAR|OPTIMIZADO|RESUMEN|Cambios|Total|Cuadruplos\")"
     ]
   }
 }

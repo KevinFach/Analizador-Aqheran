@@ -64,11 +64,17 @@ public class AnalizadorAqheran {
                 
                 List<Cuadruplo> cuadruplos = pilaSemantica.getCuadruplos();
                 if (!cuadruplos.isEmpty() && verbose) {
-                    System.out.println("\n--- CODIGO INTERMEDIO (CUADRUPLOS) ---");
-                    System.out.printf("%-6s %-14s %-14s %s%n", "OP", "ARG1", "ARG2", "RESULTADO");
-                    System.out.println("--------------------------------------------");
-                    for (Cuadruplo c : cuadruplos) System.out.println(c);
-                    System.out.println("--------------------------------------------");
+                    // Codigo sin optimizar
+                    OptimizadorCI.imprimirOriginal(cuadruplos);
+
+                    // Aplicar las 3 optimizaciones
+                    OptimizadorCI.Resultado resOpt = OptimizadorCI.optimizar(cuadruplos);
+
+                    // Codigo optimizado
+                    OptimizadorCI.imprimirOptimizado(resOpt.optimizados);
+
+                    // Tabla comparativa
+                    OptimizadorCI.imprimirComparacion(resOpt);
                 }
             }
             

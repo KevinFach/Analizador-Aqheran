@@ -1,0 +1,57 @@
+start PruebaOptimizacion {
+
+    @ x int;
+    @ y int;
+    @ z int;
+    @ i int;
+    @ resultado int;
+
+    // ============================================================
+    // CASO 1: PROPAGACION DE CONSTANTES (CP)
+    //   x=8 e y=2 se asignan como literales.
+    //   En "resultado = x + y", el optimizador sustituye
+    //   x->8 e y->2 directamente en el cuadruplo.
+    //   SIN OPT:  (+, x,  y,  T1)
+    //   CON OPT:  (+, 8,  2,  T1)   <- CP actua aqui
+    // ============================================================
+    x = 8;
+    y = 2;
+    resultado = x + y;
+
+    // ============================================================
+    // CASO 2: ELIMINACION DE SUBEXPRESIONES COMUNES (CSE)
+    //   x*y se calcula dos veces seguidas.
+    //   El optimizador detecta que el segundo calculo es identico
+    //   al primero (ya sea con los valores originales o con los
+    //   sustituidos por CP) y lo reemplaza por una copia.
+    //   SIN OPT:  (*, x, y, T2)  (:=, T2, _, z)
+    //             (*, x, y, T3)  (:=, T3, _, resultado)
+    //   CON OPT:  (*, 8, 2, T2)  (:=, T2, _, z)
+    //             (:=, T2, _, T3) (:=, T3, _, resultado)
+    //                              ^ CSE: reusar T2
+    // ============================================================
+    z = x * y;
+    resultado = x * y;
+
+    // ============================================================
+    // CASO 3: MOVIMIENTO DE CODIGO INVARIANTE DE CICLO (LICM)
+    //   Dentro del while, "x - y" NO depende de ninguna variable
+    //   que cambie en el cuerpo del ciclo (solo cambia 'i').
+    //   El optimizador mueve esa operacion ANTES del LABEL del ciclo,
+    //   de modo que se ejecuta una sola vez en lugar de 5 veces.
+    //   SIN OPT:  LABEL L_inicio
+    //             ...
+    //             (-, x, y, T5)   <- dentro del ciclo (5 ejecuciones)
+    //   CON OPT:  (-, x, y, T5)   <- antes del LABEL (1 ejecucion)
+    //             LABEL L_inicio
+    //             ...
+    // ============================================================
+    i = 0;
+    while (i < 5) {
+        resultado = x - y;
+        aqhe(resultado);
+        i += 1;
+    }
+
+}
+end
