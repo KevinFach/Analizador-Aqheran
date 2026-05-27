@@ -60,18 +60,21 @@ public class AnalizadorAqheran implements AnalizadorAqheranConstants {
                 }
 
                 List<Cuadruplo> cuadruplos = pilaSemantica.getCuadruplos();
-                if (!cuadruplos.isEmpty() && verbose) {
-                    // Codigo sin optimizar
-                    OptimizadorCI.imprimirOriginal(cuadruplos);
-
-                    // Aplicar las 3 optimizaciones
+                if (!cuadruplos.isEmpty()) {
                     OptimizadorCI.Resultado resOpt = OptimizadorCI.optimizar(cuadruplos);
+                    if (verbose) {
+                        // Codigo sin optimizar
+                        OptimizadorCI.imprimirOriginal(cuadruplos);
 
-                    // Codigo optimizado
-                    OptimizadorCI.imprimirOptimizado(resOpt.optimizados);
+                        // Codigo optimizado
+                        OptimizadorCI.imprimirOptimizado(resOpt.optimizados);
 
-                    // Tabla comparativa
-                    OptimizadorCI.imprimirComparacion(resOpt);
+                        // Tabla comparativa
+                        OptimizadorCI.imprimirComparacion(resOpt);
+                    }
+                    if (listaErroresSemanticos.isEmpty() && listaErroresSintacticos.isEmpty() && AnalizadorAqheranTokenManager.listaErroresLexicos.isEmpty()) {
+                        GeneradorEnsamblador.generarCodigo(resOpt.optimizados, tablaSimbolos.getVariablesYTipos(), "codigo_generado.asm");
+                    }
                 }
 
                 if (verbose) {
@@ -2060,152 +2063,109 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
     finally { jj_save(10, xla); }
   }
 
-  static private boolean jj_3R_tipoDato_467_7_64()
- {
-    if (jj_scan_token(STRING)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_5()
- {
-    if (jj_3R_gramaticaFor_813_5_30()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_tipoDato_466_7_63()
- {
-    if (jj_scan_token(BOOL)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_4()
- {
-    if (jj_3R_llamarFuncion_953_5_29()) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_tipoDato_465_7_62()
- {
-    if (jj_scan_token(FLOAT)) return true;
-    return false;
-  }
-
-  static private boolean jj_3R_declararArreglo_1124_13_56()
- {
-    if (jj_scan_token(VECTOR)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  static private boolean jj_3_3()
- {
-    if (jj_3R_gramaticaAsignacion_672_5_28()) return true;
-    return false;
-  }
-
   static private boolean jj_3_2()
  {
-    if (jj_3R_gramaticaWhile_642_5_27()) return true;
+    if (jj_3R_gramaticaWhile_645_5_27()) return true;
     return false;
   }
 
   static private boolean jj_3_1()
  {
-    if (jj_3R_gramaticaSi_548_5_26()) return true;
+    if (jj_3R_gramaticaSi_551_5_26()) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_464_5_61()
+  static private boolean jj_3R_tipoDato_467_5_61()
  {
     if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  static private boolean jj_3R_tipoDato_464_5_60()
+  static private boolean jj_3R_tipoDato_467_5_60()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_tipoDato_464_5_61()) {
+    if (jj_3R_tipoDato_467_5_61()) {
     jj_scanpos = xsp;
-    if (jj_3R_tipoDato_465_7_62()) {
+    if (jj_3R_tipoDato_468_7_62()) {
     jj_scanpos = xsp;
-    if (jj_3R_tipoDato_466_7_63()) {
+    if (jj_3R_tipoDato_469_7_63()) {
     jj_scanpos = xsp;
-    if (jj_3R_tipoDato_467_7_64()) return true;
+    if (jj_3R_tipoDato_470_7_64()) return true;
     }
     }
     }
     return false;
   }
 
-  static private boolean jj_3R_Codigo_359_15_41()
+  static private boolean jj_3R_Codigo_362_15_41()
  {
-    if (jj_3R_gramaticaLeer_531_5_53()) return true;
+    if (jj_3R_gramaticaLeer_534_5_53()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_358_15_40()
+  static private boolean jj_3R_Codigo_361_15_40()
  {
-    if (jj_3R_gramaticaEscribir_513_5_52()) return true;
+    if (jj_3R_gramaticaEscribir_516_5_52()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_357_15_39()
+  static private boolean jj_3R_Codigo_360_15_39()
  {
-    if (jj_3R_declararConstante_437_5_51()) return true;
+    if (jj_3R_declararConstante_440_5_51()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_356_15_38()
+  static private boolean jj_3R_Codigo_359_15_38()
  {
-    if (jj_3R_declararArreglo_1122_5_50()) return true;
+    if (jj_3R_declararArreglo_1125_5_50()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_355_15_37()
+  static private boolean jj_3R_Codigo_358_15_37()
  {
-    if (jj_3R_declararVariable_413_5_49()) return true;
+    if (jj_3R_declararVariable_416_5_49()) return true;
     return false;
   }
 
-  static private boolean jj_3R_declararArreglo_1122_5_50()
+  static private boolean jj_3R_declararArreglo_1125_5_50()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_declararArreglo_1124_13_56()) {
+    if (jj_3R_declararArreglo_1127_13_56()) {
     jj_scanpos = xsp;
-    if (jj_3R_declararArreglo_1132_13_57()) return true;
+    if (jj_3R_declararArreglo_1135_13_57()) return true;
     }
     return false;
   }
 
-  static private boolean jj_3R_gramaticaSi_548_5_26()
+  static private boolean jj_3R_gramaticaSi_551_5_26()
  {
     if (jj_scan_token(SI)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaWhile_642_5_27()
+  static private boolean jj_3R_gramaticaWhile_645_5_27()
  {
     if (jj_scan_token(WHILE)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_353_5_33()
+  static private boolean jj_3R_Codigo_356_5_33()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_Codigo_355_15_37()) {
+    if (jj_3R_Codigo_358_15_37()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_356_15_38()) {
+    if (jj_3R_Codigo_359_15_38()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_357_15_39()) {
+    if (jj_3R_Codigo_360_15_39()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_358_15_40()) {
+    if (jj_3R_Codigo_361_15_40()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_359_15_41()) {
+    if (jj_3R_Codigo_362_15_41()) {
     jj_scanpos = xsp;
     if (jj_3_1()) {
     jj_scanpos = xsp;
@@ -2217,23 +2177,23 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
     jj_scanpos = xsp;
     if (jj_3_5()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_365_15_42()) {
+    if (jj_3R_Codigo_368_15_42()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_366_15_43()) {
+    if (jj_3R_Codigo_369_15_43()) {
     jj_scanpos = xsp;
     if (jj_3_6()) {
     jj_scanpos = xsp;
     if (jj_3_7()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_369_15_44()) {
+    if (jj_3R_Codigo_372_15_44()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_374_15_45()) {
+    if (jj_3R_Codigo_377_15_45()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_379_15_46()) {
+    if (jj_3R_Codigo_382_15_46()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_386_15_47()) {
+    if (jj_3R_Codigo_389_15_47()) {
     jj_scanpos = xsp;
-    if (jj_3R_Codigo_393_15_48()) return true;
+    if (jj_3R_Codigo_396_15_48()) return true;
     }
     }
     }
@@ -2255,28 +2215,28 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
     return false;
   }
 
-  static private boolean jj_3R_declararConstante_437_5_51()
+  static private boolean jj_3R_declararConstante_440_5_51()
  {
     if (jj_scan_token(CONST)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaLeer_531_5_53()
+  static private boolean jj_3R_gramaticaLeer_534_5_53()
  {
     if (jj_scan_token(LEER)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaSwitch_1005_5_31()
+  static private boolean jj_3R_gramaticaSwitch_1008_5_31()
  {
     if (jj_scan_token(SWITCH)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaFor_813_5_30()
+  static private boolean jj_3R_gramaticaFor_816_5_30()
  {
     if (jj_scan_token(FOR)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
@@ -2289,34 +2249,34 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
     return false;
   }
 
-  static private boolean jj_3R_SentenciasFunciones_896_9_59()
+  static private boolean jj_3R_SentenciasFunciones_899_9_59()
  {
     if (jj_scan_token(VOID)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaEscribir_513_5_52()
+  static private boolean jj_3R_gramaticaEscribir_516_5_52()
  {
     if (jj_scan_token(ESCRIBIR)) return true;
     if (jj_scan_token(PARENIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_declararVariable_413_5_49()
+  static private boolean jj_3R_declararVariable_416_5_49()
  {
     if (jj_scan_token(VAR)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_393_15_48()
+  static private boolean jj_3R_Codigo_396_15_48()
  {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_682_11_36()
+  static private boolean jj_3R_gramaticaAsignacion_685_11_36()
  {
     Token xsp;
     xsp = jj_scanpos;
@@ -2333,14 +2293,14 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
     return false;
   }
 
-  static private boolean jj_3R_gramaticaTryCatch_1068_5_32()
+  static private boolean jj_3R_gramaticaTryCatch_1071_5_32()
  {
     if (jj_scan_token(TRY)) return true;
     if (jj_scan_token(LLAVEIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_679_11_35()
+  static private boolean jj_3R_gramaticaAsignacion_682_11_35()
  {
     if (jj_scan_token(IGUAL)) return true;
     return false;
@@ -2353,26 +2313,26 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_676_11_34()
+  static private boolean jj_3R_gramaticaAsignacion_679_11_34()
  {
     if (jj_scan_token(CORCHIZQ)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_386_15_47()
+  static private boolean jj_3R_Codigo_389_15_47()
  {
     if (jj_scan_token(CATCH)) return true;
     return false;
   }
 
-  static private boolean jj_3R_SentenciasFunciones_865_9_58()
+  static private boolean jj_3R_SentenciasFunciones_868_9_58()
  {
     if (jj_scan_token(FUNC)) return true;
-    if (jj_3R_tipoDato_464_5_60()) return true;
+    if (jj_3R_tipoDato_467_5_60()) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaOperadorLogico_774_5_54()
+  static private boolean jj_3R_gramaticaOperadorLogico_777_5_54()
  {
     if (jj_scan_token(BOOL)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
@@ -2381,50 +2341,50 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
 
   static private boolean jj_3_10()
  {
-    if (jj_3R_Codigo_353_5_33()) return true;
+    if (jj_3R_Codigo_356_5_33()) return true;
     return false;
   }
 
-  static private boolean jj_3R_SentenciasFunciones_864_5_55()
+  static private boolean jj_3R_SentenciasFunciones_867_5_55()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_SentenciasFunciones_865_9_58()) {
+    if (jj_3R_SentenciasFunciones_868_9_58()) {
     jj_scanpos = xsp;
-    if (jj_3R_SentenciasFunciones_896_9_59()) return true;
+    if (jj_3R_SentenciasFunciones_899_9_59()) return true;
     }
     return false;
   }
 
-  static private boolean jj_3R_Codigo_379_15_46()
+  static private boolean jj_3R_Codigo_382_15_46()
  {
     if (jj_scan_token(SINO)) return true;
     return false;
   }
 
-  static private boolean jj_3R_gramaticaAsignacion_672_5_28()
+  static private boolean jj_3R_gramaticaAsignacion_675_5_28()
  {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_gramaticaAsignacion_676_11_34()) {
+    if (jj_3R_gramaticaAsignacion_679_11_34()) {
     jj_scanpos = xsp;
-    if (jj_3R_gramaticaAsignacion_679_11_35()) {
+    if (jj_3R_gramaticaAsignacion_682_11_35()) {
     jj_scanpos = xsp;
-    if (jj_3R_gramaticaAsignacion_682_11_36()) return true;
+    if (jj_3R_gramaticaAsignacion_685_11_36()) return true;
     }
     }
     return false;
   }
 
-  static private boolean jj_3R_Codigo_374_15_45()
+  static private boolean jj_3R_Codigo_377_15_45()
  {
     if (jj_scan_token(BREAK)) return true;
     if (jj_scan_token(DELIMITADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_llamarFuncion_953_5_29()
+  static private boolean jj_3R_llamarFuncion_956_5_29()
  {
     if (jj_scan_token(FUNC)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
@@ -2434,18 +2394,18 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
 
   static private boolean jj_3_9()
  {
-    if (jj_3R_Codigo_353_5_33()) return true;
+    if (jj_3R_Codigo_356_5_33()) return true;
     return false;
   }
 
-  static private boolean jj_3R_declararArreglo_1132_13_57()
+  static private boolean jj_3R_declararArreglo_1135_13_57()
  {
     if (jj_scan_token(MATRIZ)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_369_15_44()
+  static private boolean jj_3R_Codigo_372_15_44()
  {
     if (jj_scan_token(CONTINUE)) return true;
     if (jj_scan_token(DELIMITADOR)) return true;
@@ -2454,25 +2414,68 @@ n.agregarHijo(fila); flatIdx += fila.hijos.size();
 
   static private boolean jj_3_7()
  {
-    if (jj_3R_gramaticaTryCatch_1068_5_32()) return true;
+    if (jj_3R_gramaticaTryCatch_1071_5_32()) return true;
     return false;
   }
 
   static private boolean jj_3_6()
  {
-    if (jj_3R_gramaticaSwitch_1005_5_31()) return true;
+    if (jj_3R_gramaticaSwitch_1008_5_31()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_366_15_43()
+  static private boolean jj_3R_Codigo_369_15_43()
  {
-    if (jj_3R_SentenciasFunciones_864_5_55()) return true;
+    if (jj_3R_SentenciasFunciones_867_5_55()) return true;
     return false;
   }
 
-  static private boolean jj_3R_Codigo_365_15_42()
+  static private boolean jj_3R_Codigo_368_15_42()
  {
-    if (jj_3R_gramaticaOperadorLogico_774_5_54()) return true;
+    if (jj_3R_gramaticaOperadorLogico_777_5_54()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_470_7_64()
+ {
+    if (jj_scan_token(STRING)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_5()
+ {
+    if (jj_3R_gramaticaFor_816_5_30()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_469_7_63()
+ {
+    if (jj_scan_token(BOOL)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_4()
+ {
+    if (jj_3R_llamarFuncion_956_5_29()) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_tipoDato_468_7_62()
+ {
+    if (jj_scan_token(FLOAT)) return true;
+    return false;
+  }
+
+  static private boolean jj_3R_declararArreglo_1127_13_56()
+ {
+    if (jj_scan_token(VECTOR)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_3()
+ {
+    if (jj_3R_gramaticaAsignacion_675_5_28()) return true;
     return false;
   }
 

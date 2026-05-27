@@ -1,0 +1,25 @@
+start PruebaPesada {
+    @ i int;
+    @ total int;
+    @ a int;
+    @ b int;
+    @ c int;
+    @ d int;
+    @ e int;
+    
+    i = 0;
+    total = 0;
+    a = 2;
+    b = 3;
+    c = 4;
+    d = 5;
+    e = 6;
+    
+    while (i < 5000000) {
+        // En el bucle sin optimizar, todos estos calculos invariantes (a*b, a*b+c, d-e)
+        // se calculan repetidamente 5 millones de veces.
+        // Con la optimizacion LICM de este proyecto, se calculan una sola vez fuera del bucle.
+        total = total + ((a * b + c) * (d - e));
+        i = i + 1;
+    }
+} end

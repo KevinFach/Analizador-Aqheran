@@ -63,18 +63,21 @@ public class AnalizadorAqheran {
                 }
                 
                 List<Cuadruplo> cuadruplos = pilaSemantica.getCuadruplos();
-                if (!cuadruplos.isEmpty() && verbose) {
-                    // Codigo sin optimizar
-                    OptimizadorCI.imprimirOriginal(cuadruplos);
-
-                    // Aplicar las 3 optimizaciones
+                if (!cuadruplos.isEmpty()) {
                     OptimizadorCI.Resultado resOpt = OptimizadorCI.optimizar(cuadruplos);
+                    if (verbose) {
+                        // Codigo sin optimizar
+                        OptimizadorCI.imprimirOriginal(cuadruplos);
 
-                    // Codigo optimizado
-                    OptimizadorCI.imprimirOptimizado(resOpt.optimizados);
+                        // Codigo optimizado
+                        OptimizadorCI.imprimirOptimizado(resOpt.optimizados);
 
-                    // Tabla comparativa
-                    OptimizadorCI.imprimirComparacion(resOpt);
+                        // Tabla comparativa
+                        OptimizadorCI.imprimirComparacion(resOpt);
+                    }
+                    if (listaErroresSemanticos.isEmpty() && listaErroresSintacticos.isEmpty() && AnalizadorAqheranTokenManager.listaErroresLexicos.isEmpty()) {
+                        GeneradorEnsamblador.generarCodigo(resOpt.optimizados, tablaSimbolos.getVariablesYTipos(), "codigo_generado.asm");
+                    }
                 }
                 
                 if (verbose) {

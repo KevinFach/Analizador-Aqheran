@@ -101,6 +101,19 @@ public class TablaSimbolos {
         System.out.println("----------------------------------------------------");
     }
 
+    public Map<String, String> getVariablesYTipos() {
+        Map<String, String> vars = new java.util.LinkedHashMap<>();
+        for (Map<String, Simbolo> scope : pilaScopes) {
+            for (Map.Entry<String, Simbolo> entry : scope.entrySet()) {
+                vars.put(entry.getKey(), entry.getValue().tipo);
+            }
+        }
+        for (Map.Entry<String, Simbolo> entry : scopeActual.entrySet()) {
+            vars.put(entry.getKey(), entry.getValue().tipo);
+        }
+        return vars;
+    }
+
     public void limpiar() {
         scopeActual.clear();
         pilaScopes.clear();
