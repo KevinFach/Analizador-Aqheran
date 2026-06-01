@@ -19,12 +19,15 @@ public class AnalizadorAqheran {
     static TablaDirecciones tablaDirecciones = new TablaDirecciones();
     static PilaSemantica pilaSemantica = new PilaSemantica();
     static boolean verbose = false;
+    static boolean mostrarEnsamblador = false;
 
     public static void main(String[] args) {
         String archivoEntrada = null;
         for (String arg : args) {
             if (arg.equals("--aqheran")) {
                 verbose = true;
+            } else if (arg.equals("--ensamblador")) {
+                mostrarEnsamblador = true;
             } else {
                 archivoEntrada = arg;
             }
@@ -32,7 +35,7 @@ public class AnalizadorAqheran {
 
         if (archivoEntrada == null) {
             System.out.println("Debe proporcionar un archivo de texto para analizar.");
-            System.out.println("Uso: java AnalizadorAqheran [--aqheran] <archivo>");
+            System.out.println("Uso: java AnalizadorAqheran [--aqheran] [--ensamblador] <archivo>");
             return;
         }
 
@@ -77,6 +80,16 @@ public class AnalizadorAqheran {
                     }
                     if (listaErroresSemanticos.isEmpty() && listaErroresSintacticos.isEmpty() && AnalizadorAqheranTokenManager.listaErroresLexicos.isEmpty()) {
                         GeneradorEnsamblador.generarCodigo(resOpt.optimizados, tablaSimbolos.getVariablesYTipos(), "codigo_generado.asm");
+                        if (mostrarEnsamblador) {
+                            try {
+                                System.out.println("\n--- CODIGO ENSAMBLADOR MIPS GENERADO ---");
+                                String contenidoAsm = new String(Files.readAllBytes(Paths.get("codigo_generado.asm")), StandardCharsets.UTF_8);
+                                System.out.println(contenidoAsm);
+                                System.out.println("----------------------------------------");
+                            } catch (IOException e) {
+                                System.out.println("Error al leer el archivo de ensamblador: " + e.getMessage());
+                            }
+                        }
                     }
                 }
                 
