@@ -1,0 +1,14 @@
+start PruebaVisual {
+    @ contador int;
+    contador = 1;
+    
+    aqhe("--- Iniciando Conteo ---");
+    
+    while (contador <= 10) {
+        aqhe("Numero: ");
+        aqhe(contador);
+        contador = contador + 1;
+    }
+    
+    aqhe("--- Conteo Finalizado ---");
+} end
